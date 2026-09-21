@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <!-- TODO(security): inline script（ロール判定など）を外部化後に 'unsafe-inline' を削除する -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https: http://localhost:* http://127.0.0.1:* http://*:7244 blob:; media-src 'self' https: http://localhost:* http://127.0.0.1:* http://*:7244 blob:; connect-src 'self' ws://localhost:* ws://127.0.0.1:* ws://*:7244 http://localhost:* http://127.0.0.1:* http://*:7244 https://www.youtube.com https://cdn.discordapp.com https://media.discordapp.net http://bayonet.ddo.jp https://p-at.net https://api.ipify.org; font-src 'self' data: https://cdnjs.cloudflare.com; frame-src https://www.youtube.com; object-src 'none'; base-uri 'self';">
+  <title>おつまみキャスト</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/compact.css">
+  <link rel="stylesheet" href="css/custom-titlebar.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/dark-mode.css">
+  <link rel="stylesheet" href="css/theme-glitch.css">
+  <link rel="stylesheet" href="css/theme-vivid.css">
+  <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+  <!-- カスタムタイトルバーはJSで自動生成 -->
+  
+  <!-- トップバーは非表示（元のボタンは残す） -->
+  <div class="top-bar" style="display:none;">
+    <div class="logo">おつまみキャスト</div>
+    <div class="role-selector">
+      <button class="role-btn active" id="viewerBtn">リスナー</button>
+      <button class="role-btn" id="hostBtn">配信者</button>
+    </div>
+  </div>
+
+  <!-- 配信者用接続ライン -->
+  <div class="connection-line" id="hostConnectionLine">
+    <div class="connection-row">
+      <button class="btn btn-primary" id="startHostBtn">ホスト開始</button>
+      <span style="color: #888; font-size: 12px;">配信者側は TCP 7244 番ポートの解放が必要です。</span>
+      <button class="btn btn-small" id="autoOpenPortBtn">ポート自動解放</button>
+      <button class="btn btn-small" id="checkPortBtn">開放確認</button>
+      <button class="btn btn-small" id="openBrowserBtnHost" style="margin-left: auto;">ブラウザで開く</button>
+    </div>
+  </div>
+
+  <!-- リスナー用接続ライン -->
+  <div class="connection-line active" id="viewerConnectionLine">
+    <div class="connection-row">
+      <select id="hostSelect">
+        <option value="">-- 配信者を選択 --</option>
+      </select>
+      <button class="btn" id="reloadYpBtn">YP更新</button>
+      <span id="ypStatus" style="font-size: 12px; color: #888;">0件の配信者</span>
+      <button class="btn btn-primary" id="connectBtn">接続</button>
+      <span style="color: #888;">または</span>
+      <!-- IP入力欄と接続ボタンをラップ -->
+      <div style="position: relative; display: inline-flex; align-items: center;">
+        <input type="text" id="customIp" placeholder="IP直接入力" style="padding-right: 60px;">
+        <button class="btn btn-small" id="customConnectBtn" style="position: absolute; right: 4px;">接続</button>
+      </div>
+      <button class="btn btn-small" id="openBrowserBtnViewer" style="margin-left: auto;">ブラウザで開く</button>
+    </div>
+  </div>
+
+  <!-- タブ -->
+  <div class="tabs">
+    <button class="tab active" data-tab="profile" id="profileTab">プロフィール</button>
+    <button class="tab" data-tab="otsumami" id="otsumamiTab">おつまみ</button>
+    <button class="tab" data-tab="stamps" id="stampsTab">スタンプ</button>
+    <button class="tab" data-tab="ohinerimaki" id="ohinerimakiTab" disabled style="opacity: 0.3;">おひねり撒き</button>
+    <button class="tab host-only-ui" data-tab="vcast" id="vcastTab" disabled style="opacity: 0.3;">Vcast</button>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <div class="content">
+
+    <!-- プロフィールタブの中身 -->
+    <div id="tab-profile" class="tab-pane" style="display:block;">
+      <!-- profile-tab.html から動的に読み込み -->
+    </div>
+
+    <!-- おつまみタブの中身 -->
+    <div id="tab-otsumami" class="tab-pane" style="display:none;">
+      <!-- otsumami-tab.html から動的に読み込み -->
+    </div>
+
+    <!-- スタンプタブの中身 -->
+    <div id="tab-stamps" class="tab-pane" style="display: none;">
+      <!-- stamps-tab.html から動的に読み込み -->
+    </div>
+
+    <!-- おひねり撒きタブの中身 -->
+    <div id="tab-ohinerimaki" class="tab-pane" style="display: none;">
+      <!-- ohinerimaki-tab.html から動的に読み込み -->
+    </div>
+
+    <!-- Vcastタブの中身 -->
+    <div id="tab-vcast" class="tab-pane host-only-ui" style="display: none;">
+      <!-- vcast-tab.html から動的に読み込み -->
+    </div>
+
+  </div>
+
+  <!-- ステータスバー -->
+  <div class="status-bar" id="statusBar">
+    <span id="status">ステータス: 未接続</span>
+  </div>
+
+  <script src="js/toast.js"></script>
+  <script src="js/theme-switcher.js"></script>
+  <script type="module" src="js/ui.js"></script>
+  <script type="module" src="js/compact.js"></script>
+  <script type="module" src="js/stamps.js"></script>
+  <script type="module" src="js/queue.js"></script>
+  <script type="module" src="js/tabs/tab-manager.js"></script>
+  <script src="js/custom-titlebar.js"></script>
+
+  <script>
+
+      // ===== 自動リスナーモード判定 =====
+  (function () {
+    const host = location.hostname;
+    const isLocal =
+      host === 'localhost' ||
+      host === '127.0.0.1';
+
+    if (!isLocal) {
+      console.log('[AutoViewer] リモートアクセス検出 → viewer固定');
+
+      // viewer固定
+      window.otsumamiRole = 'viewer';
+      localStorage.setItem('otsumami-role', 'viewer');
+
+      // 後続JS用フラグ
+      window.OTSUNAMI_FORCE_VIEWER = true;
+    }
+  })();
+    // ===== ホスト専用UI制御 =====
+    function updateHostOnlyUI() {
+      const role = window.state?.role || window.otsumamiRole || 'viewer';
+      const hostOnlyElements = document.querySelectorAll('.host-only-ui');
+      
+      hostOnlyElements.forEach(el => {
+        if (role === 'host') {
+          el.style.display = '';
+        } else {
+          el.style.display = 'none';
+        }
+      });
+    }
+    
+    window.addEventListener('otsumamiRoleChanged', updateHostOnlyUI);
+    window.addEventListener('load', () => {
+      setTimeout(updateHostOnlyUI, 100);
+    });
+  </script>
+</body>
+</html>

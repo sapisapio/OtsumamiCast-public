@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' ws://localhost:* ws://127.0.0.1:* http://localhost:* http://127.0.0.1:*; font-src 'self' data:; object-src 'none'; base-uri 'self';">
+  <link rel="stylesheet" href="css/overlay.css">
+  <link rel="stylesheet" href="css/ohinerimaki-overlay.css">
+  <link rel="stylesheet" href="css/vcast-overlay.css">
+</head>
+<body class="setup-mode">
+
+  <!-- リサイズハンドル -->
+  <div class="resize-handle" id="resizeHandle"></div>
+  <div class="overlay-text-tools" id="overlayTextTools">
+    <button class="overlay-text-toggle" id="overlayTextToggle" type="button" aria-label="テキストボックスを表示">□</button>
+    <button class="overlay-text-settings-toggle" id="overlayTextSettingsToggle" type="button" aria-label="テキストボックス設定">⚙</button>
+    <div class="overlay-text-panel" id="overlayTextPanel">
+      <label class="overlay-text-panel-row">
+        <span>サイズ</span>
+        <input type="range" id="overlayTextSize" min="18" max="96" value="40">
+      </label>
+      <label class="overlay-text-panel-row">
+        <span>縁取り</span>
+        <input type="checkbox" id="overlayTextStrokeToggle" checked>
+      </label>
+      <label class="overlay-text-panel-row">
+        <span>太さ</span>
+        <input type="range" id="overlayTextStrokeWidth" min="0" max="8" value="3">
+      </label>
+      <label class="overlay-text-panel-row">
+        <span>色</span>
+        <input type="color" id="overlayTextStrokeColor" value="#111111">
+      </label>
+    </div>
+  </div>
+  <div class="overlay-text-item is-hidden" id="overlayTextItem" aria-hidden="true">
+    <div class="overlay-text-drag-handle" id="overlayTextDragHandle" aria-hidden="true"></div>
+    <div class="overlay-text-box" id="overlayTextBox" contenteditable="true" aria-label="テキスト入力">離席中</div>
+    <div class="overlay-text-resize-handle" id="overlayTextResizeHandle" aria-hidden="true"></div>
+  </div>
+  <div class="ohinerimaki-notifications" id="ohinerimakiNotifications"></div>
+  <div class="vcast-avatar" id="vcastAvatar">
+    <img id="vcastAvatarImage" alt="vcast avatar">
+  </div>
+
+  <script src="js/overlay.js"></script>
+</body>
+</html>

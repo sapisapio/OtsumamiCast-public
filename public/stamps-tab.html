@@ -1,0 +1,267 @@
+<!-- stamps-tab.html -->
+<div class="section host-only-ui">
+  <div class="section-title">サムネイル表示</div>
+  <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+    <input type="checkbox" id="staticThumbnailPreview">
+    負荷軽減モード（静止画サムネイルのみ表示）
+  </label>
+  <div class="small-text" style="margin-bottom: 8px;">
+    動画・GIFなども静止画サムネイルを表示します。アニメーション用サムネイル（GIF）は通常表示時に使われます。
+  </div>
+  <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+    <input type="checkbox" id="thumbnailHoverZoom">
+    マウスホバーでサムネイルを拡大表示
+  </label>
+  <div class="small-text">
+    スタンプ一覧・最近使ったスタンプのサムネイル上で、カーソルに追従して拡大プレビューを表示します。
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">プレビュー拡大</div>
+  <div class="row" id="stampPreviewSizeOptions" style="gap: 12px; flex-wrap: wrap;">
+    <label><input type="radio" name="stampPreviewSizeOption" value="48"> 小</label>
+    <label><input type="radio" name="stampPreviewSizeOption" value="64" checked> 標準</label>
+    <label><input type="radio" name="stampPreviewSizeOption" value="80"> 中</label>
+    <label><input type="radio" name="stampPreviewSizeOption" value="96"> 大</label>
+    <label><input type="radio" name="stampPreviewSizeOption" value="128"> 特大</label>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">最近使ったスタンプ</div>
+  <div id="recentStampList" class="stamp-list"></div>
+</div>
+
+<div class="section">
+  <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+    <span>スタンプ一覧</span>
+    <button class="btn btn-small" onclick="scrollToSettings()" style="margin: 0;">⚙️ 設定</button>
+  </div>
+
+  <div class="section" id="stampCategoryFilterSection">
+    <div class="row" style="margin-bottom: 6px;" id="stampCategoryFilterButtons">
+      <button class="btn btn-small stamp-filter-btn" data-filter="">全部表示</button>
+      <button class="btn btn-small stamp-filter-btn" data-filter="all">📁未分類</button>
+    </div>
+  </div>
+
+  <div id="stampList" class="stamp-list">
+    <!-- js/stamps.js で自動生成 -->
+  </div>
+  <div class="small-text">
+    › 現在はアプリ同梱の <code>stamps/</code> フォルダ内の決め打ちファイルをテスト表示中
+  </div>
+</div>
+
+<!-- ★ ここから：スタンプ登録・整理UI（ホスト専用） -->
+<div class="section" id="stampManageSection">
+  <div class="section-title">スタンプ管理</div>
+
+  <!-- URL追加フォーム＋ドロップ欄 -->
+  <div class="row" style="margin-bottom: 6px;">
+    <input type="text" id="stampUrlInput" placeholder="スタンプURLを入力" style="width: 200px; margin-right: 8px;">
+    <button class="btn btn-small" id="stampUrlAddButton" style="margin-right: 8px;">追加</button>
+    <!-- ローカルファイル選択 -->
+    <input type="file" id="stampLocalAdd" accept="image/*,video/mp4,video/webm" style="display: none;">
+    <button class="btn btn-small host-only-ui" onclick="document.getElementById('stampLocalAdd').click();" style="margin-right: 8px;">📁 ファイル</button>
+    <!-- ドロップ欄 -->
+    <div id="stampUrlDropZone" class="stamp-drop-zone">ドロップ</div>
+  </div>
+
+  <div class="small-text" id="stampUrlHelpText">
+    ※ Discord CDN のURLを入力するか、右の「ドロップ」に Discordの画像をドラッグ＆ドロップしてください
+    （cdn.discordapp.com / media.discordapp.net）
+  </div>
+
+  <hr style="margin: 10px 0;">
+
+  <!-- 整理モードボタン（1行目） -->
+  <div class="row" style="margin-bottom: 6px;">
+    <button class="btn btn-small" id="stampEditToggleBtn">整理モード</button>
+  </div>
+
+  <!-- カテゴリ選択 → 設定 → 削除 を1行にまとめる（2行目） -->
+  <div class="row" style="margin-bottom: 6px;">
+    <select id="stampCategorySelect" multiple style="width: 160px; margin-right: 8px; min-height: 60px;">
+    </select>
+
+    <button class="btn btn-small" id="stampCategoryApplyButton" style="margin-right: 8px;">カテゴリ付与</button>
+    <button class="btn btn-small" id="stampCategoryRemoveButton" style="margin-right: 8px; background: #c93;">カテゴリ除去</button>
+
+    <button class="btn btn-small" id="stampDeleteButton" style="background: #c33;" disabled>選択したスタンプを削除</button>
+  </div>
+
+  <div class="row" style="margin-bottom: 6px;">
+    <button class="btn btn-small" id="stampThumbRebuildSelectedButton" style="margin-right: 8px;">選択スタンプのサムネイル再生成</button>
+    <button class="btn btn-small" id="stampThumbRebuildAllButton">全スタンプのサムネイル再生成</button>
+  </div>
+  <div class="small-text" id="stampThumbRebuildProgressText" style="display: none; margin-bottom: 6px;"></div>
+
+  <div class="small-text">
+    › 整理モード中にチェックしたスタンプに、カテゴリ付与や削除をまとめて行えます
+    <br>› ホストのみ削除可能。リスナーはカテゴリ付与と並び替えが可能です
+    <br>› サムネイル再生成はホストのみ実行できます
+  </div>
+
+  <hr style="margin: 20px 0;">
+
+  <!-- ホスト用スタンプ設定（ホストのみ表示） -->
+  <div id="hostStampSettingsSection" style="display: none;">
+    <div class="section-title">⚡ ホスト設定</div>
+
+    <!-- カテゴリ管理 -->
+    <div class="section">
+      <div class="section-title">カテゴリ管理</div>
+      <div class="row" style="margin-bottom: 6px;">
+        <input type="text" id="newCategoryId" placeholder="ID（例: cool）" style="width: 100px; margin-right: 8px;">
+        <input type="text" id="newCategoryLabel" placeholder="ラベル（例: 😎カッコいい）" style="width: 160px; margin-right: 8px;">
+        <button class="btn btn-small" id="addCategoryBtn">カテゴリ追加</button>
+      </div>
+      <div id="categoryListContainer" style="margin-bottom: 6px;"></div>
+      <div class="small-text">カテゴリを追加・削除できます。削除したカテゴリに設定されたスタンプは「未分類」に戻ります。</div>
+    </div>
+
+    <!-- スタンプ規定サイズ -->
+    <div class="section">
+      <div class="section-title">スタンプ規定サイズ</div>
+
+      <div class="form-group">
+        <label for="stampBaseSizeSlider">規定サイズ: <span id="stampBaseSizeLabel">220</span>px</label>
+        <input type="range" id="stampBaseSizeSlider" min="120" max="480" value="220" step="10">
+        <div class="range-value" id="stampBaseSizeDisplay">220px</div>
+        <div class="small-text">規定サイズより小さいスタンプは拡大され、大きいスタンプは縮小されます</div>
+      </div>
+    </div>
+
+    <!-- ファイルサイズ設定 -->
+    <div class="section">
+      <div class="section-title">ファイルサイズ上限</div>
+      
+      <div class="form-group">
+        <label for="maxFileSize">最大サイズ: <span id="fileSizeValue">5</span> MB</label>
+        <input type="range" id="maxFileSize" min="1" max="50" value="5" step="1">
+        <div class="range-value" id="fileSizeDisplay">5 MB</div>
+        <div class="small-text">スタンプのアップロード時に許可される最大ファイルサイズです</div>
+      </div>
+    </div>
+
+    <!-- 最大スタンプ数設定（スライダー） -->
+    <div class="section">
+      <div class="section-title">最大スタンプ数</div>
+      
+      <div class="form-group">
+        <label for="maxStampSlider">最大数: <span id="stampCountValue">100</span></label>
+        <input type="range" id="maxStampSlider" min="100" max="1100" value="100" step="100">
+        <div class="range-value" id="stampCountDisplay">100個</div>
+        <div class="small-text">右端まで移動させると無制限になります</div>
+      </div>
+    </div>
+
+    <!-- リスナーのスタンプ追加権限 -->
+    <div class="section">
+      <div class="section-title">リスナーのスタンプ追加権限</div>
+      
+      <div class="form-group">
+        <div style="margin-bottom: 12px;">
+          <label style="display: flex; align-items: center; margin-bottom: 8px;">
+            <input type="radio" name="listenerPermission" value="host-only" checked> ホストのみ
+          </label>
+          <div class="small-text" style="margin-left: 24px;">リスナーはスタンプを追加できません</div>
+        </div>
+        
+        <div style="margin-bottom: 12px;">
+          <label style="display: flex; align-items: center; margin-bottom: 8px;">
+            <input type="radio" name="listenerPermission" value="discord-only"> Discordで追加OK
+          </label>
+          <div class="small-text" style="margin-left: 24px;">Discordからのスタンプ追加を許可します</div>
+        </div>
+      </div>
+      
+      <!-- パスワード設定（オプション） -->
+      <div class="form-group">
+        <label for="discordPassword">パスワード（オプション）</label>
+        <input type="password" id="discordPassword" placeholder="パスワードを設定（空白でパスワード不要）">
+        <div class="small-text">パスワードを設定すると、リスナーはこのパスワードを入力して追加できます。空白の場合、パスワード不要です。</div>
+      </div>
+    </div>
+
+    <!-- 動画スタンプ音量設定 -->
+    <div class="section">
+      <div class="section-title">動画スタンプ音量</div>
+      
+      <div class="form-group">
+        <label for="videoStampVolume">音量: <span id="videoVolumeValue">50</span>%</label>
+        <input type="range" id="videoStampVolume" min="0" max="100" value="50" step="1">
+        <div class="range-value" id="videoVolumeDisplay">50%</div>
+        
+        <label style="margin-top: 15px; display: flex; align-items: center;">
+          <input type="checkbox" id="muteVideoStamps" style="margin-right: 8px;">
+          動画スタンプをミュート
+        </label>
+        
+        <div class="small-text">動画スタンプ再生時の音量を調整できます</div>
+      </div>
+    </div>
+
+    <!-- スタンプ表示時間設定 -->
+    <div class="section">
+      <div class="section-title">スタンプ表示時間</div>
+      
+      <div class="form-group">
+        <label for="stampDuration">表示時間: <span id="stampDurationValue">3</span>秒</label>
+        <input type="range" id="stampDuration" min="1" max="10" value="3" step="1">
+        <div class="range-value" id="stampDurationDisplay">3秒</div>
+        
+        <div class="small-text">スタンプが画面に表示される時間を設定できます</div>
+      </div>
+    </div>
+
+    <!-- スタンプ着信音設定 -->
+    <div class="section">
+      <div class="section-title">スタンプ着信音</div>
+      
+      <div class="form-group">
+        <label>着信音の選択:</label>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin: 10px 0;">
+          <label style="display: flex; align-items: center;">
+            <input type="radio" name="stampSound" value="sound1" checked style="margin-right: 8px;">
+            サウンド1
+          </label>
+          <label style="display: flex; align-items: center;">
+            <input type="radio" name="stampSound" value="sound2" style="margin-right: 8px;">
+            サウンド2
+          </label>
+          <label style="display: flex; align-items: center;">
+            <input type="radio" name="stampSound" value="sound3" style="margin-right: 8px;">
+            サウンド3
+          </label>
+          <label style="display: flex; align-items: center;">
+            <input type="radio" name="stampSound" value="sound4" style="margin-right: 8px;">
+            サウンド4
+          </label>
+          <label style="display: flex; align-items: center;">
+            <input type="radio" name="stampSound" value="random" style="margin-right: 8px;">
+            🎲 ランダム
+          </label>
+        </div>
+        
+        <label for="stampSoundVolume" style="margin-top: 15px;">音量: <span id="soundVolumeValue">50</span>%</label>
+        <input type="range" id="stampSoundVolume" min="0" max="100" value="50" step="1">
+        <div class="range-value" id="soundVolumeDisplay">50%</div>
+        
+        <div class="small-text" style="margin-top: 10px;">
+          › 静止画スタンプ（PNG/JPG/GIF）の表示時に着信音が鳴ります<br>
+          › 動画スタンプ（MP4/WEBM）は元の音声が再生されます<br>
+          › カスタム音声は public/sounds/ フォルダに sound1.mp3～sound4.mp3 として配置してください
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- › ここまで：スタンプ管理UI -->
+</div>
+
+<!-- 固定保存ボタン（ホスト専用） -->
+<button class="fixed-save-btn host-only-ui" onclick="saveAllSettings()">✓ 適用</button>

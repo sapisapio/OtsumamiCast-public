@@ -1,0 +1,195 @@
+/* ===== ビビッドモード（ゲーマー女子向け） ===== */
+
+body.theme-vivid {
+  background: linear-gradient(135deg, #ffeef8 0%, #e0d4ff 50%, #d4f0ff 100%);
+  color: #5a3d5c;
+}
+
+/* タイトルバー */
+body.theme-vivid .custom-titlebar {
+  background: linear-gradient(90deg, #ff9ecd 0%, #b99eff 50%, #9ed4ff 100%);
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(255, 158, 205, 0.3);
+}
+
+body.theme-vivid .custom-titlebar .title-logo {
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(255, 255, 255, 0.5);
+}
+
+body.theme-vivid .custom-titlebar .role-selector .role-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+}
+
+body.theme-vivid .custom-titlebar .role-selector .role-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+}
+
+body.theme-vivid .custom-titlebar .role-selector .role-btn.active {
+  background: #ffffff;
+  color: #ff6bb5;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.5);
+}
+
+body.theme-vivid .custom-titlebar .window-controls button {
+  color: #ffffff;
+}
+
+body.theme-vivid .custom-titlebar .window-controls button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-vivid .custom-titlebar .theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 接続ライン */
+body.theme-vivid .connection-line {
+  background: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid rgba(255, 158, 205, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+body.theme-vivid .connection-line .btn {
+  background: linear-gradient(135deg, #ffb3d9 0%, #c9b3ff 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 10px rgba(255, 179, 217, 0.3);
+}
+
+body.theme-vivid .connection-line .btn:hover {
+  box-shadow: 0 4px 15px rgba(255, 179, 217, 0.5);
+  transform: translateY(-1px);
+}
+
+body.theme-vivid .connection-line .btn-primary {
+  background: linear-gradient(135deg, #ff6bb5 0%, #b99eff 100%);
+}
+
+body.theme-vivid .connection-line input,
+body.theme-vivid .connection-line select {
+  background: rgba(255, 255, 255, 0.9);
+  color: #5a3d5c;
+  border: 1px solid rgba(255, 158, 205, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+body.theme-vivid .connection-line input::placeholder {
+  color: #b89ec0;
+}
+
+/* タブ */
+body.theme-vivid .tabs {
+  background: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid rgba(255, 158, 205, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+body.theme-vivid .tab {
+  color: #9a7a9c;
+}
+
+body.theme-vivid .tab:hover {
+  color: #ff6bb5;
+  background: rgba(255, 179, 217, 0.2);
+}
+
+body.theme-vivid .tab.active {
+  color: #ff6bb5;
+  border-bottom-color: #ff6bb5;
+  text-shadow: 0 2px 10px rgba(255, 107, 181, 0.3);
+}
+
+/* コンテンツ */
+body.theme-vivid .content {
+  background: transparent;
+}
+
+body.theme-vivid .btn {
+  background: linear-gradient(135deg, #ffb3d9 0%, #c9b3ff 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 10px rgba(255, 179, 217, 0.3);
+}
+
+body.theme-vivid .btn:hover {
+  box-shadow: 0 4px 15px rgba(255, 179, 217, 0.5);
+  transform: translateY(-1px);
+}
+
+body.theme-vivid .btn-primary {
+  background: linear-gradient(135deg, #ff6bb5 0%, #b99eff 100%);
+}
+
+body.theme-vivid .btn-danger {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+}
+
+body.theme-vivid input[type="text"],
+body.theme-vivid select {
+  background: rgba(255, 255, 255, 0.9);
+  color: #5a3d5c;
+  border: 1px solid rgba(255, 158, 205, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+body.theme-vivid input[type="text"]:focus,
+body.theme-vivid select:focus {
+  border-color: #ff6bb5;
+  box-shadow: 0 0 15px rgba(255, 107, 181, 0.3);
+}
+
+body.theme-vivid .drop-zone {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 158, 205, 0.5);
+  color: #9a7a9c;
+  backdrop-filter: blur(10px);
+}
+
+body.theme-vivid .drop-zone:hover {
+  background: rgba(255, 179, 217, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 107, 181, 0.3);
+}
+
+/* ステータスバー */
+body.theme-vivid .status-bar {
+  background: rgba(255, 255, 255, 0.7);
+  color: #5a3d5c;
+  border-top: 1px solid rgba(255, 158, 205, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+body.theme-vivid .label {
+  color: #7a5a7c;
+}
+
+/* YouTube風バー */
+body.theme-vivid.minimum-mode #youtubeStyleBar {
+  background: linear-gradient(90deg, #ff9ecd 0%, #b99eff 50%, #9ed4ff 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+body.theme-vivid.minimum-mode #youtubeStyleBar button {
+  color: #ffffff;
+}
+
+body.theme-vivid.minimum-mode #youtubeStyleBar button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-vivid.minimum-mode #youtubeStyleBar .yt-url-input {
+  background: rgba(255, 255, 255, 0.9);
+  color: #5a3d5c;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+body.theme-vivid.minimum-mode #youtubeStyleBar .yt-drop-zone {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #9a7a9c;
+}

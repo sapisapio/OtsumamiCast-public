@@ -1,0 +1,895 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+
+  /* ウィンドウ内でバーを右寄せにする（これが肝） */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 2px;   /* 右端に1～2pxだけ余白 */
+}
+
+/* ===== ベースバー ===== */
+.indicator-bar {
+  display: inline-flex;          /* 中身に合わせて縮む */
+  align-items: center;
+  justify-content: flex-start;   /* バーの中は左詰めでOK */
+  height: 22px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  cursor: move;
+  -webkit-app-region: drag;
+  backdrop-filter: blur(4px);
+  position: relative;
+}
+
+/* ===== 操作ボタン群 ===== */
+.indicator-actions {
+  display: flex;
+  gap: 4px;
+  margin-right: 6px;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-action-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.indicator-action-btn {
+  width: 22px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s ease-out;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-action-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.indicator-action-btn.active {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.indicator-action-panel {
+  position: absolute;
+  right: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(20, 20, 20, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-action-panel.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) translateX(0);
+}
+
+.timer-panel-content,
+.data-panel-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer-display {
+  font-variant-numeric: tabular-nums;
+  min-width: 46px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.timer-input {
+  width: 42px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  -webkit-app-region: no-drag;
+}
+
+.timer-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+}
+
+.timer-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.data-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.data-chip.is-disabled .data-value {
+  display: none;
+}
+
+.data-label {
+  opacity: 0.75;
+}
+
+.data-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== 操作ボタン群 ===== */
+.indicator-actions {
+  display: flex;
+  gap: 4px;
+  margin-right: 6px;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-action-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.indicator-action-btn {
+  width: 22px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s ease-out;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-action-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.indicator-action-btn.active {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.indicator-action-panel {
+  position: absolute;
+  right: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(20, 20, 20, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-action-panel.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) translateX(0);
+}
+
+.timer-panel-content,
+.data-panel-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer-display {
+  font-variant-numeric: tabular-nums;
+  min-width: 46px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.timer-input {
+  width: 42px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  -webkit-app-region: no-drag;
+}
+
+.timer-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+}
+
+.timer-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.data-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.data-chip.is-disabled .data-value {
+  display: none;
+}
+
+.data-label {
+  opacity: 0.75;
+}
+
+.data-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== 操作ボタン群 ===== */
+.indicator-actions {
+  display: flex;
+  gap: 4px;
+  margin-right: 6px;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-action-wrapper {
+  display: flex;
+  align-items: center;
+  flex-direction: row-reverse;
+}
+
+.indicator-action-btn {
+  width: 22px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s ease-out;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-action-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.indicator-action-btn.active {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.indicator-action-panel {
+  position: static;
+  height: 20px;
+  padding: 0;
+  border-radius: 6px;
+  background: rgba(20, 20, 20, 0.82);
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-out, max-width 0.15s ease-out;
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+  max-width: 0;
+  overflow: hidden;
+  margin-right: 6px;
+}
+
+.indicator-action-panel.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  max-width: 260px;
+  padding: 0 8px;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.timer-panel-content,
+.data-panel-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer-display {
+  font-variant-numeric: tabular-nums;
+  min-width: 46px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.timer-input {
+  width: 42px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  -webkit-app-region: no-drag;
+}
+
+.timer-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+}
+
+.timer-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.data-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.data-chip.is-disabled .data-value {
+  display: none;
+}
+
+.data-label {
+  opacity: 0.75;
+}
+
+.data-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== 操作ボタン群 ===== */
+.indicator-boxes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 6px;
+}
+
+.indicator-box {
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.indicator-timer {
+  gap: 4px;
+}
+
+.indicator-timer-input {
+  width: 72px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-timer-btn {
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 11px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-timer-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ===== 操作ボタン群 ===== */
+.indicator-boxes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 6px;
+}
+
+.indicator-box {
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.indicator-timer {
+  gap: 4px;
+}
+
+.indicator-timer-input {
+  width: 72px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-timer-btn {
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-timer-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ===== 操作ボタン群 ===== */
+.indicator-boxes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 6px;
+}
+
+.indicator-box {
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.indicator-timer {
+  gap: 4px;
+}
+
+.indicator-timer-input {
+  width: 72px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-timer-btn {
+  height: 16px;
+  width: 18px;
+  padding: 0;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-timer-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ===== 操作ボタン群 ===== */
+.indicator-boxes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 6px;
+}
+
+.indicator-box {
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.indicator-timer {
+  gap: 4px;
+}
+
+.indicator-timer-input {
+  width: 72px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-timer-btn {
+  height: 16px;
+  width: 18px;
+  padding: 0;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+}
+
+.indicator-timer-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.indicator-timer-btn.is-reload {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== アイコン群 ===== */
+.indicator-icons {
+  display: flex;
+  gap: 4px;
+  /* ここは no-drag を付けない：バーとしてドラッグしたい */
+}
+
+/* 長方形チップ風アイコン（表示専用） */
+.indicator-icon {
+  min-width: 22px;
+  height: 18px;
+  padding: 0 3px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  opacity: 0.6;
+  filter: grayscale(25%);
+  transition: all 0.12s ease-out;
+
+  /* ← ここが「表示専用」仕様 */
+  pointer-events: none;
+  cursor: default;
+}
+
+.indicator-icon.active {
+  opacity: 1;
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.3);
+  filter: grayscale(0%);
+}
+
+.indicator-icon:hover {
+  transform: translateY(-1px);
+}
+
+/* ===== 枠ON/OFFボタン ===== */
+.toggle-frame-btn {
+  width: 20px;
+  height: 18px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(0,0,0,0.35);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+  margin-left: 6px;              /* アイコン群との隙間だけ */
+  transition: all 0.12s ease-out;
+  -webkit-app-region: no-drag;   /* ここだけクリック有効 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-frame-btn:hover {
+  background: #ffffff;
+  transform: scale(1.05);
+}
+
+.toggle-frame-btn:active {
+  transform: scale(0.96);
+}
+
+.toggle-frame-btn.transparent-mode {
+  background: rgba(255,255,255,0.55);
+}
+/* ===== テーマ別カラー ===== */
+
+/* --- light：白ベース。バーは濃いグレーでダークと差別化 --- */
+body[data-theme="light"] .indicator-bar {
+  background: rgba(245, 245, 245, 0.96);   /* 明るいグレー系のパネル */
+  color: #222;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+/* light 時は中のチップも少し明るめに */
+body[data-theme="light"] .indicator-icon {
+  background: rgba(240, 240, 240, 0.96);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+body[data-theme="light"] .indicator-icon.active {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+body[data-theme="light"] .toggle-frame-btn {
+  background: rgba(230, 230, 230, 0.96);
+  color: #222;
+  border-color: rgba(0, 0, 0, 0.35);
+}
+
+body[data-theme="light"] .indicator-box,
+body[data-theme="light"] .indicator-timer-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: #222;
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+body[data-theme="light"] .indicator-timer-input {
+  border-color: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  color: #222;
+}
+
+/* --- dark：今までどおり「黒寄りグレー」 --- */
+body[data-theme="dark"] .indicator-bar {
+  background: rgba(30, 30, 30, 0.95);
+  color: #f0f0f0;
+}
+
+/* --- glitch：Logitech/Razer 系ブルー寄せネオン --- */
+body[data-theme="glitch"] .indicator-bar {
+  /* タイトルバーに寄せたネイビー〜シアンのグラデ */
+  background: linear-gradient(90deg,
+      #0a2c4d 0%,
+      #114d74 40%,
+      #0b3d59 100%);
+  color: #e9faff;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 255, 209, 0.9);
+  box-shadow:
+    0 0 10px rgba(0, 255, 209, 0.6),
+    0 0 22px rgba(0, 176, 255, 0.55);
+}
+
+/* glitch 時のアイコン：暗いネイビーパネル＋シアン縁取り */
+body[data-theme="glitch"] .indicator-icon {
+  background: rgba(3, 10, 18, 0.96);
+  border-color: rgba(0, 255, 209, 0.45);
+}
+
+/* 有効状態でネオン感を強くする（ロールボタンに揃える） */
+body[data-theme="glitch"] .indicator-icon.active {
+  background: linear-gradient(120deg, #00cfff, #00ffbf);
+  color: #021018;
+  border-color: rgba(0, 255, 209, 0.95);
+  box-shadow:
+    0 0 10px rgba(0, 255, 209, 0.9),
+    0 0 20px rgba(0, 176, 255, 0.7);
+}
+
+/* glitch の □ボタンもゲーミング寄りに */
+body[data-theme="glitch"] .toggle-frame-btn {
+  background: transparent;
+  color: #e9faff;
+  border-color: rgba(0, 255, 209, 0.9);
+  box-shadow:
+    0 0 8px rgba(0, 255, 209, 0.6),
+    0 0 16px rgba(0, 176, 255, 0.5);
+}
+
+body[data-theme="glitch"] .indicator-box,
+body[data-theme="glitch"] .indicator-timer-btn {
+  background: rgba(3, 10, 18, 0.9);
+  border-color: rgba(0, 255, 209, 0.6);
+  color: #e9faff;
+  box-shadow: 0 0 6px rgba(0, 255, 209, 0.4);
+}
+
+body[data-theme="glitch"] .indicator-timer-input {
+  border-color: rgba(0, 255, 209, 0.6);
+  background: rgba(3, 10, 18, 0.9);
+  color: #e9faff;
+}
+
+body[data-theme="glitch"] .toggle-frame-btn:hover {
+  background: radial-gradient(circle at top,
+      rgba(0, 207, 255, 0.25),
+      rgba(0, 0, 0, 0.85));
+}
+
+/* --- vivid：現状のパステル系はそのまま --- */
+body[data-theme="vivid"] .indicator-bar {
+  background: rgba(255, 255, 255, 0.92);
+  color: #5a3d5c;
+  border: 1px solid rgba(255, 158, 205, 0.5);
+  box-shadow: 0 2px 10px rgba(255, 158, 205, 0.35);
+}
+
+body[data-theme="vivid"] .indicator-icon {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 158, 205, 0.45);
+  color: #5a3d5c;
+}
+
+body[data-theme="vivid"] .indicator-icon.active {
+  background: linear-gradient(135deg, #ffd1e6 0%, #d8c2ff 100%);
+  border-color: rgba(255, 158, 205, 0.75);
+  color: #5a3d5c;
+}
+
+body[data-theme="vivid"] .toggle-frame-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: #5a3d5c;
+  border-color: rgba(255, 158, 205, 0.5);
+}
+
+body[data-theme="vivid"] .indicator-box,
+body[data-theme="vivid"] .indicator-timer-btn {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 158, 205, 0.5);
+  color: #5a3d5c;
+}
+
+body[data-theme="vivid"] .indicator-timer-input {
+  border-color: rgba(255, 158, 205, 0.5);
+  background: rgba(255, 255, 255, 0.9);
+  color: #5a3d5c;
+}

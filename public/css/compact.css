@@ -1,0 +1,220 @@
+/* ===== compact.css 元の状態（余白問題の前） ===== */
+
+/* ミニマムモード基本設定 */
+body.minimum-mode .connection-line,
+body.minimum-mode .tabs {
+  display: none;
+}
+
+body.minimum-mode .content {
+  padding: 0;
+  padding-top: 96px;
+}
+
+body.minimum-mode .section {
+  margin: 0;
+}
+
+body.minimum-mode .section:has(.video-container) {
+  height: calc(100vh - 96px);
+}
+
+body.minimum-mode .video-container {
+  border-radius: 0;
+  height: 100%;
+}
+
+body.minimum-mode .status-bar {
+  display: none;
+}
+
+/* 通常モードのコントロール（URL入力エリア）を非表示 */
+body.minimum-mode #hostUrlSection,
+body.minimum-mode .section-title,
+body.minimum-mode .compact-controls {
+  display: none !important;
+}
+
+/* ホスト側：動画エリア以外のセクションを非表示 */
+body.minimum-mode #hostContent > .section:not(:has(.video-container)) {
+  display: none !important;
+}
+
+/* リスナー側：ディレイセクションも非表示 */
+body.minimum-mode #viewerContent > .section:not(:has(.video-container)) {
+  display: none !important;
+}
+
+/* 通常モードのコンパクトコントロール */
+.compact-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-compact {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.btn-minimum {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.drop-zone {
+  border: 2px dashed #c0c0c0;
+  border-radius: 4px;
+  padding: 6px 16px;
+  background: #fafafa;
+  transition: all 0.2s;
+  cursor: pointer;
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.drop-zone:hover {
+  border-color: #0078d4;
+  background: #e6f2ff;
+}
+
+/* ミニマムモード時のYouTubeスタイルバー */
+body.minimum-mode #youtubeStyleBar {
+  position: fixed;
+  top: 48px;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #d0d0d0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  z-index: 9999;
+}
+
+#youtubeStyleBar {
+  display: none;
+}
+
+body.minimum-mode #youtubeStyleBar {
+  display: flex;
+}
+
+/* YouTubeバーのボタン共通スタイル */
+body.minimum-mode #youtubeStyleBar button {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+  background: transparent;
+  border: none;
+  color: #333;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+body.minimum-mode #youtubeStyleBar button:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+/* 📐ボタン */
+body.minimum-mode #youtubeStyleBar .yt-compact-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 14px;
+}
+
+/* ドロップゾーン */
+body.minimum-mode #youtubeStyleBar .yt-drop-zone {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+  line-height: 32px;
+  border: 1px dashed #c0c0c0;
+  border-radius: 4px;
+  background: #fafafa;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+body.minimum-mode #youtubeStyleBar .yt-drop-zone:hover {
+  border-color: #0078d4;
+  background: #e6f2ff;
+}
+
+/* URL入力欄 */
+body.minimum-mode #youtubeStyleBar .yt-url-input {
+  height: 32px;
+  width: 120px;
+  padding: 0 8px;
+  font-size: 12px;
+  border: 1px solid #c0c0c0;
+  border-radius: 4px;
+  background: #ffffff;
+  transition: width 0.2s;
+}
+
+body.minimum-mode #youtubeStyleBar .yt-url-input:focus {
+  width: 200px;
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0,120,212,0.2);
+}
+
+/* 「読」ボタン（フラット） */
+body.minimum-mode #youtubeStyleBar .yt-load-btn {
+  width: 40px;
+  height: 32px;
+  padding: 0;
+  font-size: 13px;
+  background: transparent;
+  border: none;
+  color: #333;
+}
+
+body.minimum-mode #youtubeStyleBar .yt-load-btn:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+/* 📋ボタン */
+body.minimum-mode #youtubeStyleBar .yt-clipboard-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 14px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 800px) {
+  body.minimum-mode {
+    /* コンパクトモード強制 */
+  }
+}
+
+@media (max-width: 600px) {
+  body.minimum-mode #youtubeStyleBar .yt-url-input {
+    width: 80px;
+  }
+  
+  body.minimum-mode #youtubeStyleBar .yt-url-input:focus {
+    width: 120px;
+  }
+}
+
+@media (max-width: 400px) {
+  body.minimum-mode #youtubeStyleBar .yt-drop-zone {
+    display: none;
+  }
+}

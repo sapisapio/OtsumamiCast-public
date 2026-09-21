@@ -1,0 +1,49 @@
+{
+  "profile": {
+    "name": "サピオch",
+    "furigana": "",
+    "nickname": "",
+    "favorite": "",
+    "location": "",
+    "startYear": "",
+    "activeTime": "",
+    "skin": "resume",
+    "freeFormItems": [
+      {
+        "id": "item-1766648438472-c2zo6g",
+        "title": "フリーフォーム",
+        "content": ""
+      }
+    ],
+    "links": [
+      {
+        "url": "https://x.com/sapisapio",
+        "icon": "twitter",
+        "label": "sapio"
+      },
+      {
+        "url": "fds",
+        "icon": "youtube",
+        "label": "sf"
+      },
+      {
+        "url": "fsd",
+        "icon": "twitch",
+        "label": "sfd"
+      },
+      {
+        "url": "fsd",
+        "icon": "twitch",
+        "label": "sfd"
+      }
+    ],
+    "photo": "/images/profile-photo.png?v=1766908172713"
+  },
+  "features": {
+    "otsumami": true,
+    "stamps": true,
+    "ohinerimaki": true,
+    "vcast": true
+  },
+  "bannedIps": []
+}

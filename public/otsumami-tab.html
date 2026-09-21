@@ -1,0 +1,76 @@
+<!-- otsumami-tab.html -->
+
+<!-- 配信者側コンテンツ -->
+<div id="hostContent" style="display: none;">
+  <div class="section disabled-overlay" id="hostUrlSection">
+    <div class="compact-controls">
+      <button class="btn btn-small" id="minimumModeBtn" title="ミニマムモード">📐</button>
+      <input type="text" id="ytUrl" placeholder="YouTube動画URL" value="" disabled style="width: 300px;">
+      <button class="btn btn-small" id="loadBtn" disabled>読み込み</button>
+      <button class="btn btn-small" id="clipboardBtn" disabled>ペースト</button>
+      <div id="dropZone" class="drop-zone">URLドロップ</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="video-container">
+      <div id="playerHost"></div>
+    </div>
+  </div>
+</div>
+
+<!-- リスナー側コンテンツ -->
+<div id="viewerContent">
+  <div class="section">
+    <div class="video-container">
+      <div id="playerViewer"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="row">
+      <span class="label">ディレイ</span>
+      <input type="range" id="offsetSlider" min="0" max="10" value="0" step="1">
+      <span id="offsetLabel">0 秒</span>
+      <button class="btn" id="refreshBtn">リフレッシュ</button>
+    </div>
+    <div class="small-text">
+      ※ホストより何秒遅らせて再生するか(Peercast のラグに合わせて調整)
+    </div>
+  </div>
+</div>
+
+<!-- ★ キュー機能（ホスト・リスナー共通） -->
+<div class="section" style="margin-top: 20px;">
+  <div class="row" id="queueToggleRow" style="display: none;">
+    <label>
+      <input type="checkbox" id="queueToggle">
+      リクエストを受け付ける
+    </label>
+  </div>
+  
+  <!-- キュー機能の拡張フォーム（チェックONで表示） -->
+  <div id="queueForm" style="display: none; margin-top: 10px;">
+    
+    <!-- リクエスト入力欄（ホスト・リスナー共通） -->
+    <div class="row">
+      <input type="text" id="queueUrlInput" placeholder="YouTube URL を入力" style="flex: 1;">
+      <button class="btn btn-primary" id="addToQueueBtn">キューに追加</button>
+    </div>
+
+    <!-- キュー一覧 -->
+    <div style="margin-top: 15px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h4 style="margin: 0;">再生キュー</h4>
+        <!-- ホストのみ表示：次の動画ボタン -->
+        <button class="btn btn-small" id="playNextBtn" style="display: none;">▶️ 次の動画</button>
+      </div>
+      
+      <!-- ホスト用キューリスト -->
+      <div id="hostQueueList" style="display: none;"></div>
+      
+      <!-- リスナー用キューリスト -->
+      <div id="viewerQueueList" style="display: none;"></div>
+    </div>
+  </div>
+</div>

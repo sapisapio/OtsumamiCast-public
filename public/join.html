@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https: http://localhost:* http://127.0.0.1:* http://*:7244 blob:; media-src 'self' https: http://localhost:* http://127.0.0.1:* http://*:7244 blob:; connect-src 'self' ws://localhost:* ws://127.0.0.1:* ws://*:7244 http://localhost:* http://127.0.0.1:* http://*:7244 https://www.youtube.com https://cdn.discordapp.com https://media.discordapp.net http://bayonet.ddo.jp https://p-at.net; font-src 'self' data: https://cdnjs.cloudflare.com; frame-src https://www.youtube.com; object-src 'none'; base-uri 'self';">
+  <title>おつまみキャスト - リスナー</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/compact.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/dark-mode.css">
+  <link rel="stylesheet" href="css/theme-glitch.css">
+  <link rel="stylesheet" href="css/theme-vivid.css">
+  <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+  
+  <!-- 接続状態表示 -->
+  <div class="connection-line active" style="text-align: center; padding: 20px;">
+    <div id="connectionStatus">
+      <span style="font-size: 18px; color: #888;">📡 接続中...</span>
+    </div>
+  </div>
+
+  <!-- タブ -->
+  <div class="tabs">
+    <button class="tab active" data-tab="profile" id="profileTab">プロフィール</button>
+    <button class="tab" data-tab="otsumami" id="otsumamiTab">おつまみ</button>
+    <button class="tab" data-tab="stamps" id="stampsTab">スタンプ</button>
+    <button class="tab" data-tab="ohinerimaki" id="ohinerimakiTab" disabled style="opacity: 0.3;">おひねり撒き</button>
+    <button class="tab host-only-ui" data-tab="vcast" id="vcastTab" disabled style="opacity: 0.3;">Vcast</button>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <div class="content">
+
+    <!-- プロフィールタブの中身 -->
+    <div id="tab-profile" class="tab-pane" style="display:block;">
+      <!-- profile-tab.html から動的に読み込み -->
+    </div>
+
+    <!-- おつまみタブの中身 -->
+    <div id="tab-otsumami" class="tab-pane" style="display:none;">
+      <!-- otsumami-tab.html から動的に読み込み -->
+    </div>
+
+    <!-- スタンプタブの中身 -->
+    <div id="tab-stamps" class="tab-pane" style="display: none;">
+      <!-- stamps-tab.html から動的に読み込み -->
+    </div>
+
+    <!-- おひねり撒きタブの中身 -->
+    <div id="tab-ohinerimaki" class="tab-pane" style="display: none;">
+      <!-- ohinerimaki-tab.html から動的に読み込み -->
+    </div>
+
+    <!-- Vcastタブの中身 -->
+    <div id="tab-vcast" class="tab-pane host-only-ui" style="display: none;">
+      <!-- vcast-tab.html から動的に読み込み -->
+    </div>
+
+  </div>
+
+  <!-- ステータスバー -->
+  <div class="status-bar" id="statusBar">
+    <span id="status">ステータス: 接続中...</span>
+  </div>
+
+  <script src="js/toast.js"></script>
+  <script src="js/theme-switcher.js"></script>
+  <script type="module" src="js/ui.js"></script>
+  <script type="module" src="js/compact.js"></script>
+  <script type="module" src="js/stamps.js"></script>
+  <script type="module" src="js/queue.js"></script>
+  <script type="module" src="js/tabs/tab-manager.js"></script>
+
+  <script>
+    function normalizeTargetHost(rawTarget) {
+      if (!rawTarget || typeof rawTarget !== 'string') return '';
+      const input = rawTarget.trim();
+      if (!input) return '';
+
+      try {
+        const url = /^wss?:\/\//i.test(input) || /^https?:\/\//i.test(input)
+          ? new URL(input)
+          : new URL(`http://${input}`);
+        return url.hostname || '';
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function resolveJoinTarget() {
+      const params = new URLSearchParams(location.search);
+      const queryTarget = (params.get('host') || params.get('ip') || params.get('target') || '').trim();
+      const isLocalHost = (value) => value === 'localhost' || value === '127.0.0.1';
+      const canUseStoredTarget = location.protocol === 'file:' || !location.hostname;
+      const normalizedQueryTarget = normalizeTargetHost(queryTarget);
+
+      if (normalizedQueryTarget) {
+        return normalizedQueryTarget;
+      }
+
+      if (location.hostname && !isLocalHost(location.hostname)) {
+        return location.hostname;
+      }
+
+      if (canUseStoredTarget) {
+        const storedTarget = (localStorage.getItem('otsumami-last-target-ip') || '').trim();
+        if (storedTarget) {
+          return storedTarget;
+        }
+      }
+
+      return location.hostname || '127.0.0.1';
+    }
+
+    // ===== リスナー専用：自動接続 =====
+    window.addEventListener('load', async () => {
+      console.log('[Join] リスナーページ読み込み完了');
+      
+      // URLからIPとポートを取得
+      let hostIp = resolveJoinTarget();
+      const hostPort = location.port || '7244';
+      
+      // ★ localhost テスト用：localhost の場合は 127.0.0.1 に変換
+      if (hostIp === 'localhost') {
+        hostIp = '127.0.0.1';
+        console.log('[Join] localhost → 127.0.0.1 に変換');
+      }
+
+      if (hostIp && hostIp !== 'localhost' && hostIp !== '127.0.0.1') {
+        localStorage.setItem('otsumami-last-target-ip', hostIp);
+      }
+      
+      console.log(`[Join] 自動接続先: ${hostIp}:${hostPort}`);
+      
+      // リスナーとして自動接続
+      try {
+        // ロールをリスナーに固定
+        window.otsumamiRole = 'viewer';
+        localStorage.setItem('otsumami-role', 'viewer');
+        
+        if (window.state) {
+          window.state.role = 'viewer';
+        }
+        
+        // ★ WebSocket接続処理を直接実行
+        const wsUrl = `ws://${hostIp}:${hostPort}`;
+        console.log('[Join] WebSocket接続開始:', wsUrl);
+        
+        const ws = new WebSocket(wsUrl);
+        
+        ws.onopen = () => {
+          console.log('[Join] WebSocket接続成功');
+          window.otsumamiWs = ws;
+          
+          // リスナーとして登録
+          ws.send(JSON.stringify({
+            type: 'register',
+            role: 'viewer'
+          }));
+          
+          document.getElementById('connectionStatus').innerHTML = 
+            '<span style="font-size: 18px; color: #4CAF50;">✅ 接続成功</span>';
+          
+          document.getElementById('status').textContent = 'ステータス: 接続済み';
+          
+          // プロフィールタブを読み込み
+          if (window.tabManager && typeof window.tabManager.loadTab === 'function') {
+            window.tabManager.loadTab('profile');
+          }
+        };
+        
+        ws.onerror = (error) => {
+          console.error('[Join] WebSocket接続エラー:', error);
+          document.getElementById('connectionStatus').innerHTML = `
+            <div style="font-size: 16px; color: #888;">
+              <p>❌ 接続失敗</p>
+              <p>配信者のアプリで「ホスト開始」を押してください</p>
+              <button class="btn btn-primary" onclick="location.reload();" style="margin-top: 10px;">
+                再接続
+              </button>
+            </div>
+          `;
+        };
+        
+        ws.onclose = () => {
+          console.log('[Join] WebSocket切断');
+          document.getElementById('status').textContent = 'ステータス: 切断されました';
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('[Join] メッセージ受信:', data.type);
+            
+            // メッセージハンドリングは既存のstamps.js等が処理
+            window.dispatchEvent(new CustomEvent('websocket-message', { detail: data }));
+          } catch (error) {
+            console.error('[Join] メッセージ解析エラー:', error);
+          }
+        };
+        
+      } catch (error) {
+        console.error('[Join] 自動接続エラー:', error);
+        document.getElementById('connectionStatus').innerHTML = 
+          '<span style="font-size: 18px; color: #f44336;">❌ 接続失敗</span>';
+      }
+    });
+
+    // ===== ホスト専用UIを非表示 =====
+    function updateHostOnlyUI() {
+      const hostOnlyElements = document.querySelectorAll('.host-only-ui');
+      hostOnlyElements.forEach(el => {
+        el.style.display = 'none';
+      });
+    }
+    
+    window.addEventListener('otsumamiRoleChanged', updateHostOnlyUI);
+    window.addEventListener('load', () => {
+      setTimeout(updateHostOnlyUI, 100);
+    });
+  </script>
+</body>
+</html>

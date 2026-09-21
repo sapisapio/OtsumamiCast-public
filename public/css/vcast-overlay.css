@@ -1,0 +1,199 @@
+.vcast-avatar {
+  position: absolute;
+  bottom: 0;
+  right: 12px;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.vcast-avatar img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  position: relative;
+  z-index: 1;
+}
+
+.vcast-avatar.position-bottom-left {
+  left: 12px;
+  right: auto;
+}
+
+.vcast-avatar.position-bottom-center {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.vcast-avatar.position-bottom-right {
+  right: 12px;
+  left: auto;
+}
+
+.vcast-reaction {
+  position: absolute;
+  bottom: 100%;
+  right: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  color: #fff;
+  font-size: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: vcast-reaction-pop 1.6s ease-out forwards;
+}
+
+.vcast-reaction .vcast-reaction-points {
+  margin-left: 6px;
+  font-size: 16px;
+}
+
+.vcast-avatar.idle-breathe {
+  animation: vcast-breathe calc(3s / var(--vcast-idle-speed, 1)) ease-in-out infinite;
+}
+
+.vcast-avatar.idle-bounce {
+  animation: vcast-idle-bounce calc(2.6s / var(--vcast-idle-speed, 1)) ease-in-out infinite;
+}
+
+.vcast-avatar.idle-shake {
+  animation: vcast-idle-shake calc(1.6s / var(--vcast-idle-speed, 1)) ease-in-out infinite;
+}
+
+.vcast-avatar.idle-rotate {
+  animation: vcast-rotate calc(10s / var(--vcast-idle-speed, 1)) ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.vcast-avatar.idle-micro-rotate {
+  animation: vcast-micro-rotate calc(4s / var(--vcast-idle-speed, 1)) ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.vcast-avatar.idle-tilt {
+  animation: vcast-tilt calc(3.2s / var(--vcast-idle-speed, 1)) ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.vcast-avatar.idle-heartbeat {
+  animation: vcast-heartbeat calc(2.4s / var(--vcast-idle-speed, 1)) ease-in-out infinite;
+}
+
+.vcast-avatar.idle-stomp {
+  animation: vcast-stomp calc(2.6s / var(--vcast-idle-speed, 1)) ease-in-out infinite;
+}
+
+.vcast-avatar.mic-bright {
+  filter: brightness(1.2);
+}
+
+.vcast-avatar.mic-dim {
+  filter: brightness(0.8);
+}
+
+.vcast-avatar.mic-pulse {
+  transform: scale(1.04);
+}
+
+.vcast-avatar.mic-glow {
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+}
+
+.vcast-ripple {
+  position: absolute;
+  inset: auto;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.45);
+  opacity: 0;
+  animation: vcast-ripple 1.4s ease-out;
+  pointer-events: none;
+  z-index: 0;
+  transform: scale(var(--vcast-ripple-scale, 1));
+}
+
+@keyframes vcast-reaction-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes vcast-idle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(calc(-6px * var(--vcast-idle-intensity, 1))); }
+}
+
+@keyframes vcast-idle-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(calc(-3px * var(--vcast-idle-intensity, 1))); }
+  75% { transform: translateX(calc(3px * var(--vcast-idle-intensity, 1))); }
+}
+
+@keyframes vcast-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(calc(360deg * var(--vcast-idle-intensity, 1))); }
+}
+
+@keyframes vcast-micro-rotate {
+  0%, 100% { transform: rotate(calc(-90deg * var(--vcast-idle-intensity, 1))); }
+  50% { transform: rotate(calc(90deg * var(--vcast-idle-intensity, 1))); }
+}
+
+@keyframes vcast-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(calc(1 + 0.03 * var(--vcast-idle-intensity, 1))); }
+}
+
+@keyframes vcast-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(calc(2deg * var(--vcast-idle-intensity, 1))); }
+}
+
+@keyframes vcast-heartbeat {
+  0%, 100% { transform: scale(1); }
+  20% { transform: scale(calc(1 + 0.05 * var(--vcast-idle-intensity, 1))); }
+  40% { transform: scale(1); }
+}
+
+@keyframes vcast-stomp {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(calc(-6px * var(--vcast-idle-intensity, 1))); }
+  50% { transform: translateY(0); }
+}
+
+@keyframes vcast-ripple {
+  0% { transform: scale(calc(0.4 * var(--vcast-ripple-scale, 1))); opacity: 0.8; }
+  100% { transform: scale(calc(1.9 * var(--vcast-ripple-scale, 1))); opacity: 0; }
+}
+
+@keyframes vcast-tier-pulse {
+  0%, 100% { transform: scale(1); filter: saturate(1); }
+  50% { transform: scale(1.04); filter: saturate(1.2); }
+}
+
+@keyframes vcast-tier-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

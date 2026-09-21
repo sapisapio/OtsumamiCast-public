@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http://localhost:* http://127.0.0.1:* http://*:7244 blob:; media-src 'self' https: http://localhost:* http://127.0.0.1:* http://*:7244 blob:; connect-src 'self' ws://localhost:* ws://127.0.0.1:* ws://*:7244 http://localhost:* http://127.0.0.1:* http://*:7244 https://www.youtube.com https://cdn.discordapp.com https://media.discordapp.net http://bayonet.ddo.jp https://p-at.net; font-src 'self' data:; frame-src https://www.youtube.com; object-src 'none'; base-uri 'self';">
+  <title>おつまみキャスト</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/compact.css">
+  <link rel="stylesheet" href="css/custom-titlebar.css">
+  <link rel="stylesheet" href="css/toast.css">
+  <link rel="stylesheet" href="css/dark-mode.css">
+  <link rel="stylesheet" href="css/theme-glitch.css">
+  <link rel="stylesheet" href="css/theme-vivid.css">
+  <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+  <!-- カスタムタイトルバーはJSで自動生成 -->
+  
+  <!-- トップバーは非表示（元のボタンは残す） -->
+  <div class="top-bar" style="display:none;">
+    <div class="logo">おつまみキャスト</div>
+    <div class="role-selector">
+      <button class="role-btn active" id="viewerBtn">リスナー</button>
+      <button class="role-btn" id="hostBtn">配信者</button>
+    </div>
+  </div>
+
+  <!-- 配信者用接続ライン -->
+  <div class="connection-line" id="hostConnectionLine">
+    <div class="connection-row">
+      <button class="btn btn-primary" id="startHostBtn">ホスト開始</button>
+      <span style="color: #888; font-size: 12px;">配信者側は TCP 7244 番ポートの解放が必要です。</span>
+      <button class="btn btn-small" id="autoOpenPortBtn">ポート自動解放</button>
+      <button class="btn btn-small" id="checkPortBtn">開放確認</button>
+      <button class="btn btn-small" id="openBrowserBtnHost" style="margin-left: auto;">ブラウザで開く</button>
+    </div>
+  </div>
+
+  <!-- リスナー用接続ライン -->
+  <div class="connection-line active" id="viewerConnectionLine">
+    <div class="connection-row">
+      <select id="hostSelect">
+        <option value="">-- 配信者を選択 --</option>
+      </select>
+      <button class="btn" id="reloadYpBtn">YP更新</button>
+      <span id="ypStatus" style="font-size: 12px; color: #888;">0件の配信者</span>
+      <button class="btn btn-primary" id="connectBtn">接続</button>
+      <span style="color: #888;">または</span>
+      <!-- IP入力欄と接続ボタンをラップ -->
+      <div style="position: relative; display: inline-flex; align-items: center;">
+        <input type="text" id="customIp" placeholder="IP直接入力" style="padding-right: 60px;">
+        <button class="btn btn-small" id="customConnectBtn" style="position: absolute; right: 4px;">接続</button>
+      </div>
+      <button class="btn btn-small" id="openBrowserBtnViewer" style="margin-left: auto;">ブラウザで開く</button>
+    </div>
+  </div>
+
+  <!-- タブ -->
+  <div class="tabs">
+    <button class="tab active" data-tab="otsumami">おつまみ</button>
+    <button class="tab" data-tab="stamps">スタンプ</button>
+    <button class="tab" disabled style="opacity: 0.3;">おひねり撒き</button>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <div class="content">
+
+    <!-- おつまみタブの中身 -->
+    <div id="tab-otsumami" class="tab-pane" style="display:block;">
+      <!-- otsumami-tab.html から動的に読み込み -->
+    </div>
+
+    <!-- スタンプタブの中身 -->
+    <div id="tab-stamps" class="tab-pane" style="display: none;">
+      <!-- stamps-tab.html から動的に読み込み -->
+    </div>
+
+  </div>
+
+  <!-- ステータスバー -->
+  <div class="status-bar" id="statusBar">
+    <span id="status">ステータス: 未接続</span>
+  </div>
+
+  <script src="js/toast.js"></script>
+  <script src="js/theme-switcher.js"></script>
+  <script type="module" src="js/ui.js"></script>
+  <script type="module" src="js/compact.js"></script>
+  <script type="module" src="js/stamps.js"></script>
+  <script type="module" src="js/queue.js"></script>
+  <script src="js/custom-titlebar.js"></script>
+
+  <script>
+    // ===== ホスト専用UI制御 =====
+    function updateHostOnlyUI() {
+      const role = window.state?.role || window.otsumamiRole || 'viewer';
+      const hostOnlyElements = document.querySelectorAll('.host-only-ui');
+      
+      hostOnlyElements.forEach(el => {
+        if (role === 'host') {
+          el.style.display = '';
+        } else {
+          el.style.display = 'none';
+        }
+      });
+    }
+    
+    window.addEventListener('otsumamiRoleChanged', updateHostOnlyUI);
+    window.addEventListener('load', () => {
+      setTimeout(updateHostOnlyUI, 100);
+    });
+
+    // ===== タブコンテンツの動的読み込み =====
+    let otsumamiTabLoaded = false;
+    let stampsTabLoaded = false;
+
+    /**
+     * おつまみタブの読み込み
+     */
+    async function loadOtsumamiTab() {
+        if (otsumamiTabLoaded) {
+        console.log('[Tabs] おつまみタブは既に読み込み済み');
+        return;
+      }
+
+
+      const container = document.getElementById('tab-otsumami');
+      if (!container) {
+        console.error('[Tabs] tab-otsumami が見つかりません');
+        return;
+      }
+      
+      try {
+        // HTMLを読み込み
+        const response = await fetch('otsumami-tab.html');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const html = await response.text();
+        container.innerHTML = html;
+        
+        console.log('[Tabs] otsumami-tab.html を読み込みました');
+        
+        // 初期化スクリプトを実行
+        const otsumamiTabModule = await import('./js/tabs/otsumami-tab-init.js');
+        window.otsumamiTabInit = otsumamiTabModule;
+        await otsumamiTabModule.initOtsumamiTab();
+        
+        otsumamiTabLoaded = true;
+        console.log('[Tabs] ✅ おつまみタブの読み込み完了');
+      } catch (error) {
+        console.error('[Tabs] ❌ おつまみタブの読み込み失敗:', error);
+        container.innerHTML = '<div class="section"><p style="color:red;">おつまみタブの読み込みに失敗しました</p></div>';
+      }
+    }
+
+    /**
+     * スタンプタブの読み込み
+     */
+    async function loadStampsTab() {
+      if (stampsTabLoaded) {
+        console.log('[Tabs] スタンプタブは既に読み込み済み');
+        return;
+      }
+
+      const container = document.getElementById('tab-stamps');
+      if (!container) {
+        console.error('[Tabs] tab-stamps が見つかりません');
+        return;
+      }
+      
+      try {
+        // HTMLを読み込み
+        const response = await fetch('stamps-tab.html');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const html = await response.text();
+        container.innerHTML = html;
+        
+        console.log('[Tabs] stamps-tab.html を読み込みました');
+        
+        // 初期化スクリプトを実行
+        const { initStampsTab } = await import('./js/tabs/stamps-tab-init.js');
+        initStampsTab();
+        
+        stampsTabLoaded = true;
+        console.log('[Tabs] ✅ スタンプタブの読み込み完了');
+        
+        // ★ 初回読み込み後に強制的にスタンプリストを再描画
+        if (window.otsumamiStamp && typeof window.otsumamiStamp.renderStampList === 'function') {
+          console.log('[Tabs] 初回読み込み後にスタンプリストを再描画');
+          window.otsumamiStamp.renderStampList();
+          if (typeof window.otsumamiStamp.renderRecentStamps === 'function') {
+            window.otsumamiStamp.renderRecentStamps();
+          }
+        }
+      } catch (error) {
+        console.error('[Tabs] ❌ スタンプタブの読み込み失敗:', error);
+        container.innerHTML = '<div class="section"><p style="color:red;">スタンプタブの読み込みに失敗しました</p></div>';
+      }
+    }
+
+    // タブ切り替えを監視
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('tab')) {
+        const tabName = e.target.dataset.tab;
+        
+        // おつまみタブがクリックされたら読み込み
+        if (tabName === 'otsumami') {
+          loadOtsumamiTab();  // フラグチェックは内部で行う
+        }
+
+        
+        // スタンプタブがクリックされたら読み込み
+        if (tabName === 'stamps') {
+          // 初回読み込み
+          if (!stampsTabLoaded) {
+            loadStampsTab();
+          } else {
+            // ★ 2回目以降：スタンプリストを再描画
+            console.log('[Tabs] スタンプタブに切り替え - リスト再描画');
+                    // ★ 修正: 初回読み込み後の再描画は不要（initStampsTab内で既に実行）
+        // stamps-tab-init.js の 23-32行 で既に描画されるため削除
+          }
+        }
+      }
+    });
+
+    // 初回表示時におつまみタブを読み込み
+    window.addEventListener('load', () => {
+      // おつまみタブが最初から表示されているので読み込む
+      loadOtsumamiTab();
+      
+      // スタンプタブが選択されていたら読み込み（通常はない）
+      const activeTab = document.querySelector('.tab.active');
+      if (activeTab && activeTab.dataset.tab === 'stamps') {
+        loadStampsTab();
+      }
+    });
+  </script>
+</body>
+</html>

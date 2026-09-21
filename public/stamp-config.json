@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "maxFileSize": 10,
+  "maxStampCount": "unlimited",
+  "listenerAddPermission": "discord-only",
+  "allowedDiscordServerIds": [],
+  "discordServerPasswords": {},
+  "createdAt": 1764704930273,
+  "updatedAt": 1774161638119,
+  "discordPassword": null,
+  "videoVolume": 100,
+  "muteVideo": false,
+  "stampDuration": 3,
+  "stampBaseSize": 480
+}

@@ -1,0 +1,41 @@
+# ==============================
+# Dependencies
+# ==============================
+node_modules/
+
+# ==============================
+# Build / Distribution
+# ==============================
+dist/
+
+# ==============================
+# Logs & Environment
+# ==============================
+*.log
+.env
+.env.local
+
+# ==============================
+# OS / Editor junk
+# ==============================
+.DS_Store
+Thumbs.db
+*.code-workspace
+.vscode/
+.idea/
+
+# ==============================
+# Runtime / Local-only data
+# ==============================
+server/data/*.json
+server/data/*secret*.json
+!server/data/.gitkeep
+
+# ==============================
+# User uploaded stamps (keep folder, ignore user stamps)
+# ==============================
+public/stamps/*
+!public/stamps/.gitkeep
+!public/stamps/thumbs/
+public/stamps/thumbs/*
+!public/stamps/thumbs/.gitkeep

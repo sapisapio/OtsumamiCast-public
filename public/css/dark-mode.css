@@ -1,0 +1,191 @@
+/* ===== ダークモード ===== */
+
+body.dark-mode {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+
+/* タイトルバー（ダーク） */
+body.dark-mode .custom-titlebar {
+  background: #2d2d2d;
+  color: #ffffff;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+body.dark-mode .custom-titlebar .title-logo {
+  color: #ffffff;
+}
+
+body.dark-mode .custom-titlebar .role-selector .role-btn {
+  background: rgba(255,255,255,0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+body.dark-mode .custom-titlebar .role-selector .role-btn:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+body.dark-mode .custom-titlebar .role-selector .role-btn.active {
+  background: #0078d4;
+  color: #ffffff;
+  border-color: #0078d4;
+}
+
+body.dark-mode .custom-titlebar .window-controls button {
+  color: #ffffff;
+}
+
+body.dark-mode .custom-titlebar .window-controls button:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+/* 接続ライン */
+body.dark-mode .connection-line {
+  background: #252526;
+  border-bottom: 1px solid #3e3e42;
+}
+
+body.dark-mode .connection-line .btn {
+  background: #3e3e42;
+  color: #e0e0e0;
+}
+
+body.dark-mode .connection-line .btn:hover {
+  background: #4e4e52;
+}
+
+body.dark-mode .connection-line .btn-primary {
+  background: #0078d4;
+  color: #ffffff;
+}
+
+body.dark-mode .connection-line .btn-primary:hover {
+  background: #1084d8;
+}
+
+body.dark-mode .connection-line input,
+body.dark-mode .connection-line select {
+  background: #3e3e42;
+  color: #e0e0e0;
+  border: 1px solid #555555;
+}
+
+body.dark-mode .connection-line input::placeholder {
+  color: #888888;
+}
+
+/* タブ */
+body.dark-mode .tabs {
+  background: #252526;
+  border-bottom: 1px solid #3e3e42;
+}
+
+body.dark-mode .tab {
+  color: #888888;
+}
+
+body.dark-mode .tab:hover {
+  color: #e0e0e0;
+  background: rgba(255,255,255,0.05);
+}
+
+body.dark-mode .tab.active {
+  color: #e0e0e0;
+  border-bottom-color: #0078d4;
+}
+
+/* コンテンツ */
+body.dark-mode .content {
+  background: #1e1e1e;
+}
+
+body.dark-mode .section-title {
+  color: #888888;
+}
+
+body.dark-mode .btn {
+  background: #3e3e42;
+  color: #e0e0e0;
+}
+
+body.dark-mode .btn:hover {
+  background: #4e4e52;
+}
+
+body.dark-mode .btn-primary {
+  background: #0078d4;
+}
+
+body.dark-mode .btn-danger {
+  background: #d13438;
+}
+
+body.dark-mode input[type="text"],
+body.dark-mode select {
+  background: #3e3e42;
+  color: #e0e0e0;
+  border: 1px solid #555555;
+}
+
+body.dark-mode input[type="text"]:focus,
+body.dark-mode select:focus {
+  border-color: #0078d4;
+}
+
+body.dark-mode input[type="text"]::placeholder {
+  color: #888888;
+}
+
+body.dark-mode .drop-zone {
+  background: #3e3e42;
+  border-color: #555555;
+  color: #888888;
+}
+
+body.dark-mode .drop-zone:hover {
+  border-color: #0078d4;
+  background: rgba(0,120,212,0.1);
+}
+
+/* ステータスバー */
+body.dark-mode .status-bar {
+  background: #252526;
+  color: #888888;
+  border-top: 1px solid #3e3e42;
+}
+
+body.dark-mode .label {
+  color: #b0b0b0;
+}
+
+/* YouTube風バー（ミニマムモード） */
+body.dark-mode.minimum-mode #youtubeStyleBar {
+  background: #2d2d2d;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+body.dark-mode.minimum-mode #youtubeStyleBar button {
+  color: #e0e0e0;
+}
+
+body.dark-mode.minimum-mode #youtubeStyleBar button:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+body.dark-mode.minimum-mode #youtubeStyleBar .yt-url-input {
+  background: #3e3e42;
+  color: #e0e0e0;
+  border-color: #555555;
+}
+
+body.dark-mode.minimum-mode #youtubeStyleBar .yt-drop-zone {
+  background: #3e3e42;
+  border-color: #555555;
+  color: #888888;
+}
+
+/* トースト（ダークモード） */
+body.dark-mode .toast {
+  /* トーストはそのまま（見やすいので） */
+}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' ws://localhost:* ws://127.0.0.1:* http://localhost:* http://127.0.0.1:*; font-src 'self' data:; object-src 'none'; base-uri 'self';">
+  <link rel="stylesheet" href="css/indicator.css">
+</head>
+<body>
+  <div class="indicator-bar">
+    <div class="indicator-boxes">
+      <div class="indicator-box indicator-datetime" id="indicatorDateTime">--/--(--)-:--</div>
+      <div class="indicator-box indicator-timer">
+        <input class="indicator-timer-input" id="indicatorTimerInput" type="text" value="00:00:00" inputmode="numeric" aria-label="タイマー時間">
+        <button class="indicator-timer-btn" id="indicatorTimerStart" title="開始">▶</button>
+      </div>
+    </div>
+    <div class="indicator-icons">
+      <!-- おつまみ（動画同期） -->
+      <div class="indicator-icon" data-feature="otsumami" title="おつまみ（動画同期）">🎬</div>
+      <!-- スタンプ -->
+      <div class="indicator-icon" data-feature="stamp" title="スタンプ">🎯</div>
+      <!-- おひねり -->
+      <div class="indicator-icon" data-feature="ohinerimaki" title="おひねり">💰</div>
+    </div>
+
+    <!-- 枠表示切替はそのまま（クリック可能） -->
+    <button class="toggle-frame-btn" id="toggleFrameBtn" title="枠表示切替">□</button>
+  </div>
+
+  <script src="js/indicator.js"></script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+/* === Glitch theme v2 : Logitech / Razer 系ブルー寄せ ================= */
+
+/* 画面全体のベースカラー：黒ではなく濃いティール〜ネイビー */
+body.theme-glitch {
+  background:
+    radial-gradient(circle at top,
+      #1b4f73 0%,      /* ←明るめの青ティール */
+      #0b1d2b 45%,
+      #031018 100%);
+  color: #e9faff;
+}
+/* タイトルバー：ネイビー〜シアンのグラデ */
+body.theme-glitch .custom-titlebar {
+  background: linear-gradient(90deg,
+      #0a2c4d 0%,
+      #114d74 40%,
+      #0b3d59 100%);
+  border-bottom: 1px solid rgba(0, 255, 209, 0.7);
+  box-shadow:
+    0 0 14px rgba(0, 255, 209, 0.45),
+    0 0 26px rgba(0, 176, 255, 0.45);
+}
+
+body.theme-glitch .custom-titlebar .title-logo {
+  color: #f5fbff;
+  text-shadow:
+    0 0 10px rgba(0, 255, 209, 0.4),
+    0 0 14px rgba(0, 122, 255, 0.5);
+}
+
+/* 配信者／リスナー切り替えボタン */
+body.theme-glitch .custom-titlebar .role-selector .role-btn {
+  background: transparent;
+  color: #9fd6ff;
+  border-bottom: 2px solid transparent;
+}
+
+body.theme-glitch .custom-titlebar .role-selector .role-btn:hover {
+  background: rgba(0, 173, 238, 0.18);
+}
+
+body.theme-glitch .custom-titlebar .role-selector .role-btn.active {
+  background: linear-gradient(120deg, #00cfff, #00ffbf);
+  color: #021018;
+  border-bottom-color: transparent;
+  box-shadow:
+    0 0 12px rgba(0, 255, 209, 0.8),
+    0 0 18px rgba(0, 176, 255, 0.7);
+}
+
+/* ウィンドウ操作ボタン */
+body.theme-glitch .custom-titlebar .window-controls button {
+  color: #c3eaff;
+}
+
+body.theme-glitch .custom-titlebar .window-controls button:hover {
+  background: rgba(0, 207, 255, 0.18);
+}
+
+/* 接続バー（ホスト解除／ポート自動解放とかの列） */
+body.theme-glitch .connection-line {
+  background: linear-gradient(90deg,
+      #082236 0%,
+      #0d3550 50%,
+      #093648 100%);
+  border-bottom: 2px solid rgba(0, 255, 209, 0.55);
+}
+
+
+body.theme-glitch .connection-line .btn {
+  background: rgba(5, 20, 32, 0.96);
+  color: #e3f7ff;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 200, 255, 0.55);
+}
+
+body.theme-glitch .connection-line .btn:hover {
+  background: radial-gradient(circle at top,
+      rgba(0, 207, 255, 0.2),
+      rgba(0, 0, 0, 0.85));
+  box-shadow:
+    0 0 10px rgba(0, 207, 255, 0.7),
+    0 0 18px rgba(0, 255, 191, 0.5);
+}
+
+/* 重要ボタンだけはグラデで目立たせる（ポート自動解放等） */
+body.theme-glitch .connection-line .btn-primary {
+  background: linear-gradient(135deg, #00e0ff, #00ffbf);
+  color: #021018;
+  border: none;
+}
+
+/* タブバー：青いバー＋アクティブは明るい板 */
+body.theme-glitch .tabs {
+  background: linear-gradient(90deg, #040f1b 0%, #062234 50%, #04252b 100%);
+  border-bottom: 2px solid rgba(0, 255, 209, 0.6);
+}
+
+body.theme-glitch .tab {
+  color: #8fb6ff;
+  background: transparent;
+}
+
+body.theme-glitch .tab:hover {
+  color: #ffffff;
+  background: rgba(0, 174, 255, 0.22);
+}
+
+body.theme-glitch .tab.active {
+  color: #021018;
+  background: linear-gradient(120deg, #00cfff, #00ffbf);
+  border-bottom-color: transparent;
+  box-shadow:
+    0 0 10px rgba(0, 255, 209, 0.9),
+    0 0 18px rgba(0, 176, 255, 0.7);
+}
+
+/* メインコンテンツ：黒ではなく、ネイビー系の落ち着いた面 */
+body.theme-glitch .content {
+  background:
+    linear-gradient(135deg,
+      rgba(0, 255, 191, 0.10),
+      rgba(0, 207, 255, 0.12),
+      rgba(0, 0, 0, 0.90)),
+    radial-gradient(circle at 0% 0%, #1b4f73 0%, #0b1d2b 50%, #031018 100%);
+}
+
+/* 汎用ボタン（タブ内など） */
+body.theme-glitch .tab {
+  color: #b1d8ff;  /* ←文字色を少し明るく */
+}
+
+body.theme-glitch .tab.active {
+  background: linear-gradient(120deg,
+      #47eaff,   /* ←明るいシアン */
+      #00ffbf);
+  color: #031018;
+  box-shadow:
+    0 0 14px rgba(0, 255, 209, 0.95),
+    0 0 22px rgba(0, 176, 255, 0.8);
+}
+
+
+/* テキストボックス・セレクト */
+body.theme-glitch input[type="text"],
+body.theme-glitch select {
+  background: rgba(4, 18, 30, 0.96);
+  color: #e3f7ff;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 155, 235, 0.7);
+}
+
+body.theme-glitch input[type="text"]::placeholder {
+  color: rgba(140, 205, 255, 0.7);
+}
+
+body.theme-glitch input[type="text"]:focus,
+body.theme-glitch select:focus {
+  border-color: #00ffbf;
+  box-shadow:
+    0 0 10px rgba(0, 255, 191, 0.7),
+    0 0 16px rgba(0, 176, 255, 0.6);
+}
+
+/* ドロップゾーン（URL ドロップ） */
+body.theme-glitch .drop-zone {
+  background: rgba(4, 20, 32, 0.96);
+  border-radius: 6px;
+  border: 1px dashed rgba(0, 188, 255, 0.9);
+  color: #a8dbff;
+}
+
+body.theme-glitch .drop-zone:hover {
+  background: radial-gradient(circle at top,
+      rgba(0, 188, 255, 0.18),
+      rgba(0, 0, 0, 0.9));
+  box-shadow:
+    0 0 10px rgba(0, 188, 255, 0.7),
+    0 0 16px rgba(0, 255, 191, 0.4);
+}
+
+/* ステータスバー */
+body.theme-glitch .status-bar {
+  background: #030c13;
+  color: #8adfff;
+  border-top: 1px solid rgba(0, 255, 209, 0.55);
+}
+
+body.theme-glitch .label {
+  color: #9fffe0;
+}
+
+/* 最小化モードの YouTube 操作バー */
+body.theme-glitch.minimum-mode #youtubeStyleBar {
+  background: linear-gradient(90deg, #041321 0%, #062234 50%, #04252b 100%);
+  border: 1px solid rgba(0, 188, 255, 0.7);
+}
+
+body.theme-glitch.minimum-mode #youtubeStyleBar button {
+  background: rgba(6, 24, 38, 0.96);
+  color: #e3f7ff;
+  border-color: rgba(0, 188, 255, 0.55);
+}
+
+body.theme-glitch.minimum-mode #youtubeStyleBar button:hover {
+  background: radial-gradient(circle at top,
+      rgba(0, 207, 255, 0.22),
+      rgba(0, 0, 0, 0.9));
+}
+
+body.theme-glitch.minimum-mode #youtubeStyleBar .yt-url-input {
+  background: rgba(4, 18, 30, 0.96);
+  color: #e3f7ff;
+  border-color: rgba(0, 155, 235, 0.7);
+}
+
+body.theme-glitch.minimum-mode #youtubeStyleBar .yt-drop-zone {
+  background: rgba(4, 20, 32, 0.96);
+  border-color: rgba(0, 188, 255, 0.9);
+  color: #a8dbff;
+}

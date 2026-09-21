@@ -1,0 +1,236 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@font-face {
+  font-family: "CorporateLogoBold";
+  src: url("/fonts/Corporate-Logo-Bold-ver3.otf") format("opentype");
+  font-display: swap;
+}
+
+body {
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+  pointer-events: none;     /* ← 全体を透過させる */
+}
+
+/* 設定モード時の枠 */
+body.setup-mode {
+  background: rgba(50, 50, 50, 0.4);
+  border: 3px solid #00ff00;
+  box-shadow: 
+    0 0 0 1px rgba(0,0,0,0.8),
+    inset 0 0 0 1px rgba(255,255,255,0.2);
+pointer-events: auto;     /* ← 設定モードのときだけクリック取る */
+}
+
+/* リサイズハンドル */
+.resize-handle {
+  position: absolute;
+  bottom: 0;
+  left: 0;        /* ← 右から左に変更 */
+  width: 30px;
+  height: 30px;
+  cursor: nwse-resize;  /* ← そのまま */
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.resize-handle::after {
+  content: '⋰';
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 24px;
+  color: rgba(255,255,255,0.8);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+body:not(.setup-mode) .resize-handle {
+  display: none;
+}
+
+/* ===== オーバーレイテキスト ===== */
+.overlay-text-tools {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+.overlay-text-toggle,
+.overlay-text-settings-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(20, 20, 20, 0.35);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.overlay-text-toggle:hover,
+.overlay-text-settings-toggle:hover {
+  background: rgba(40, 40, 40, 0.55);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.overlay-text-toggle:active,
+.overlay-text-settings-toggle:active {
+  transform: scale(0.96);
+}
+
+.overlay-text-panel {
+  position: absolute;
+  top: 34px;
+  right: 0;
+  min-width: 200px;
+  padding: 10px 12px;
+  background: rgba(15, 15, 15, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.overlay-text-panel.is-open {
+  display: flex;
+}
+
+.overlay-text-panel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.overlay-text-panel-row input[type="range"] {
+  flex: 1;
+}
+
+.overlay-text-panel-row input[type="color"] {
+  width: 32px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.overlay-text-item {
+  position: absolute;
+  top: 60px;
+  right: 24px;
+  display: inline-flex;
+  align-items: flex-start;
+  z-index: 15;
+  pointer-events: auto;
+}
+
+.overlay-text-item.is-hidden {
+  display: none;
+}
+
+.overlay-text-box {
+  min-width: 120px;
+  min-height: 52px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-family: "CorporateLogoBold", "Noto Sans JP", "Yu Gothic UI", sans-serif;
+  font-weight: 700;
+  font-size: 40px;
+  color: #ffffff;
+  white-space: pre-wrap;
+  outline: none;
+  text-shadow: var(--overlay-text-shadow, 0 1px 3px rgba(0, 0, 0, 0.4));
+  -webkit-font-smoothing: antialiased;
+}
+
+body.setup-mode .overlay-text-box {
+  background: rgba(20, 20, 20, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+body:not(.setup-mode) .overlay-text-box {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.overlay-text-drag-handle {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.25);
+  cursor: move;
+  display: none;
+}
+
+.overlay-text-resize-handle {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.25);
+  cursor: nwse-resize;
+  display: none;
+}
+
+body.setup-mode .overlay-text-drag-handle,
+body.setup-mode .overlay-text-resize-handle {
+  display: block;
+}
+
+body:not(.setup-mode) .overlay-text-tools {
+  opacity: 0;
+  pointer-events: none;
+}
+/* 画面上に出すスタンプ画像 */
+.stamp-instance {
+  position: absolute;
+  pointer-events: none;  /* ← これは絶対必要！残す！ */
+  z-index: 10;
+
+  /* サイズ制限は JS に任せるので解除 */
+  max-width: none;
+  max-height: none;
+  width: auto;
+  height: auto;
+
+  /* ランダム位置のズレ防止 */
+  transform: none;
+
+  /* 歪みなし */
+  object-fit: contain;
+
+  opacity: 1;
+  transition: opacity 0.4s ease-out;
+}
+
+
+.stamp-instance.fade-out {
+  opacity: 0;
+}

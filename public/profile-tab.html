@@ -1,0 +1,469 @@
+<!-- profile-tab.html -->
+<!-- プロフィールカード表示・編集タブ -->
+
+<style>
+  /* ===== プロフィールタブ共通スタイル ===== */
+  /* スキン固有のスタイルは /css/profile-skins/*.css に分離 */
+  
+  /* 全テーマ（ダーク・グリッチ・ビビッド）を完全無効化 */
+  body.dark-mode #tab-profile,
+  body.theme-glitch #tab-profile,
+  body.theme-vivid #tab-profile {
+    background: white !important;
+    color: #2d3748 !important;
+  }
+  
+  body.dark-mode #tab-profile *,
+  body.theme-glitch #tab-profile *,
+  body.theme-vivid #tab-profile * {
+    background-image: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  
+  body.dark-mode #tab-profile input,
+  body.dark-mode #tab-profile textarea,
+  body.dark-mode #tab-profile select,
+  body.theme-glitch #tab-profile input,
+  body.theme-glitch #tab-profile textarea,
+  body.theme-glitch #tab-profile select,
+  body.theme-vivid #tab-profile input,
+  body.theme-vivid #tab-profile textarea,
+  body.theme-vivid #tab-profile select {
+    background: white !important;
+    color: #2d3748 !important;
+    border: 1px solid #ced4da !important;
+  }
+  
+  body.dark-mode #tab-profile .btn,
+  body.theme-glitch #tab-profile .btn,
+  body.theme-vivid #tab-profile .btn {
+    background: #4a90e2 !important;
+    color: white !important;
+  }
+
+  body.dark-mode #tab-profile .toggle-switch:not(.active),
+  body.theme-glitch #tab-profile .toggle-switch:not(.active),
+  body.theme-vivid #tab-profile .toggle-switch:not(.active) {
+    background: #e0e0e0 !important;
+    border: 1px solid #cfd4da !important;
+  }
+  
+  #tab-profile .profile-container { 
+    max-width: 900px; 
+    margin: 0 auto; 
+    background: white !important; 
+  }
+  
+  /* スキン選択部分（スキンCSS適用外） */
+  #tab-profile .header {
+    background: white !important;
+    border: none !important;
+    padding: 16px 20px !important;
+  }
+  
+  #tab-profile .skin-selector {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background: transparent !important;
+    border: none !important;
+  }
+  
+  #tab-profile .skin-selector span {
+    font-size: 13px !important;
+    color: #495057 !important;
+    font-weight: 600 !important;
+  }
+  
+  #tab-profile .skin-select {
+    padding: 6px 12px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 6px !important;
+    background: white !important;
+    color: #495057 !important;
+    font-size: 13px !important;
+  }
+  
+  /* ===== ホスト/リスナーモード切り替え ===== */
+  #tab-profile.viewer-mode .host-only { display: none !important; }
+  #tab-profile.host-mode .viewer-only { display: none !important; }
+  
+  /* リスナー接続前プレースホルダー */
+  #tab-profile.viewer-mode.viewer-disconnected .profile-content { display: none; }
+  #tab-profile.viewer-mode.viewer-disconnected .viewer-placeholder { display: flex !important; }
+  #tab-profile.viewer-mode.viewer-connected .viewer-placeholder { display: none !important; }
+  
+  #tab-profile .viewer-placeholder {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin: 20px;
+  }
+  
+  #tab-profile .viewer-placeholder-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+  #tab-profile .viewer-placeholder-title { font-size: 20px; font-weight: 700; color: #2d3748; margin-bottom: 8px; }
+  #tab-profile .viewer-placeholder-text { font-size: 14px; color: #6c757d; line-height: 1.6; }
+  
+  /* ===== リンクモーダル ===== */
+  .link-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .link-modal.active { display: flex; }
+  
+  .link-modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  
+  .link-modal-header {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 20px;
+  }
+  
+  .link-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .link-modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .link-modal-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #495057;
+  }
+  
+  .link-modal-input {
+    padding: 10px 14px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  
+  .link-modal-input:focus {
+    outline: none;
+    border-color: #4a90e2;
+  }
+  
+  .link-modal-icons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  
+  .link-modal-icon-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 8px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .link-modal-icon-option:hover {
+    border-color: #4a90e2;
+    background: #f0f7ff;
+  }
+  
+  .link-modal-icon-option.selected {
+    border-color: #4a90e2;
+    background: #e3f2fd;
+  }
+  
+  .link-modal-icon-option i {
+    font-size: 24px;
+    color: #495057;
+  }
+  
+  .link-modal-icon-option span {
+    font-size: 11px;
+    color: #6c757d;
+  }
+  
+  .link-modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+  
+  .link-modal-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .link-modal-btn-cancel {
+    background: #e9ecef;
+    color: #495057;
+  }
+  
+  .link-modal-btn-cancel:hover {
+    background: #dee2e6;
+  }
+  
+  .link-modal-btn-save {
+    background: #4a90e2;
+    color: white;
+  }
+  
+  .link-modal-btn-save:hover {
+    background: #357abd;
+  }
+</style>
+
+<div class="profile-container" data-skin="basic">
+  <div class="basic-skin">
+    <div class="header">
+      <div class="skin-selector host-only">
+        <span>スキン</span>
+        <select class="skin-select" id="profileSkinSelect">
+          <option value="basic">ベーシック</option>
+          <option value="resume">履歴書</option>
+          <option value="kawaii">プロフ帳</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="content">
+      <!-- リスナー未接続時のプレースホルダー -->
+      <div class="viewer-placeholder viewer-only">
+        <div class="viewer-placeholder-icon">📋</div>
+        <div class="viewer-placeholder-title">配信者に接続してください</div>
+        <div class="viewer-placeholder-text">
+          配信者に接続すると、プロフィールが表示されます<br>
+          接続するまでお待ちください
+        </div>
+      </div>
+      
+      <!-- プロフィールコンテンツ（ホスト常時表示、リスナー接続後のみ表示） -->
+      <div class="profile-content">
+        <!-- プロフィールカード -->
+        <div class="profile-card">
+          <div class="profile-info">
+            <div class="name-section">
+              <div class="name-item">
+                <span class="name-label">ふりがな</span>
+                <input type="text" class="sub-name" id="profileFurigana" placeholder="">
+              </div>
+              <div class="name-item">
+                <span class="name-label">名前</span>
+                <input type="text" class="main-name" id="profileName" placeholder="">
+              </div>
+              <div class="name-item">
+                <span class="name-label">呼称・別名</span>
+                <input type="text" class="sub-name" id="profileNickname" placeholder="">
+              </div>
+            </div>
+            
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">好物</span>
+                <input type="text" class="info-input" id="profileFavorite" placeholder="例：RPG、ラーメン">
+              </div>
+              <div class="info-item">
+                <span class="info-label">拠点</span>
+                <input type="text" class="info-input" id="profileLocation" placeholder="例：東京、関西">
+              </div>
+              <div class="info-item">
+                <span class="info-label">配信開始年</span>
+                <input type="text" class="info-input" id="profileStartYear" placeholder="例：2020年">
+              </div>
+              <div class="info-item">
+                <span class="info-label">活動時間</span>
+                <input type="text" class="info-input" id="profileActiveTime" placeholder="例：平日21時〜、土日昼">
+              </div>
+            </div>
+            
+            <div class="links-area">
+              <span class="info-label">SNSリンク</span>
+              <div class="links-grid" id="profileLinksGrid">
+                <!-- JavaScriptで動的生成 -->
+              </div>
+            </div>
+          </div>
+          
+          <div class="photo-area">
+            <div class="photo-frame" id="profilePhotoFrame">
+              <div class="photo-placeholder">
+                <div class="photo-icon">🖼️</div>
+                <div>画像</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- フリーフォーム群（動的生成） -->
+        <div id="profileFreeFormItems">
+          <!-- JavaScriptで動的生成 -->
+        </div>
+        
+        <!-- フォーム追加ボタン（ホスト専用） -->
+        <div class="add-form-container host-only">
+          <button class="add-form-btn" id="addFreeFormBtn">+ 項目を追加</button>
+        </div>
+        
+        <!-- 機能設定（ホスト専用） -->
+        <div class="section host-only">
+          <div class="section-header">
+            <span class="section-title">⚙️ 機能設定</span>
+          </div>
+          <div class="features-section">
+            <div class="feature-toggle">
+              <span>おつまみ</span>
+              <div class="toggle-switch active" id="toggleOtsumami" data-feature="otsumami"></div>
+            </div>
+            <div class="feature-toggle">
+              <span>スタンプ</span>
+              <div class="toggle-switch active" id="toggleStamps" data-feature="stamps"></div>
+            </div>
+            <div class="feature-toggle">
+              <span>おひねり撒き</span>
+              <div class="toggle-switch" id="toggleOhinerimaki" data-feature="ohinerimaki"></div>
+            </div>
+            <div class="feature-toggle">
+              <span>Vcast</span>
+              <div class="toggle-switch" id="toggleVcast" data-feature="vcast"></div>
+            </div>
+          </div>
+        </div>
+        
+        
+        <!-- 招待リンク（ホスト専用） -->
+        <div class="section host-only">
+          <div class="section-header">
+            <span class="section-title">🌐 招待リンク</span>
+          </div>
+          <div class="section-content">
+            <div class="invite-link-row">
+              <input class="invite-link-input" id="inviteLinkInput" type="text" readonly>
+              <button class="invite-link-copy" id="inviteLinkCopyBtn">コピー</button>
+            </div>
+            <div class="invite-link-note">ボタンひとつで「グローバルIP:ポート」をクリップボードにコピーします。</div>
+          </div>
+        </div>
+
+        <!-- 接続BAN（ホスト専用） -->
+        <div class="section host-only">
+          <div class="section-header">
+            <span class="section-title">🚫 接続BAN</span>
+          </div>
+          <div class="section-content">
+            <div class="ban-input-row">
+              <input class="ban-ip-input" id="banIpInput" type="text" placeholder="例: 203.0.113.10">
+              <button class="ban-add-btn" id="banIpAddBtn">追加</button>
+            </div>
+            <div class="ban-list" id="banList"></div>
+            <div class="ban-note">BANしたIPからの接続は拒否されます。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ★ リンク追加モーダル -->
+<div class="link-modal" id="linkModal">
+  <div class="link-modal-content">
+    <div class="link-modal-header">🔗 リンク追加</div>
+    <div class="link-modal-form">
+      <!-- URL入力 -->
+      <div class="link-modal-field">
+        <label class="link-modal-label">URL</label>
+        <input type="text" class="link-modal-input" id="linkUrlInput" placeholder="https://...">
+      </div>
+      
+      <!-- ラベル入力 -->
+      <div class="link-modal-field">
+        <label class="link-modal-label">表示名</label>
+        <input type="text" class="link-modal-input" id="linkLabelInput" placeholder="Twitter" maxlength="20">
+      </div>
+      
+      <!-- アイコン選択 -->
+      <div class="link-modal-field">
+        <label class="link-modal-label">アイコン</label>
+        <div class="link-modal-icons" id="linkIconGrid">
+          <div class="link-modal-icon-option" data-icon="twitter">
+            <i class="fa-brands fa-x-twitter"></i>
+            <span>X</span>
+          </div>
+          <div class="link-modal-icon-option" data-icon="youtube">
+            <i class="fa-brands fa-youtube"></i>
+            <span>YouTube</span>
+          </div>
+          <div class="link-modal-icon-option" data-icon="twitch">
+            <i class="fa-brands fa-twitch"></i>
+            <span>Twitch</span>
+          </div>
+          <div class="link-modal-icon-option" data-icon="discord">
+            <i class="fa-brands fa-discord"></i>
+            <span>Discord</span>
+          </div>
+          <div class="link-modal-icon-option" data-icon="wiki">
+            <i class="fa-solid fa-book"></i>
+            <span>Wiki</span>
+          </div>
+          <div class="link-modal-icon-option" data-icon="link">
+            <i class="fa-solid fa-link"></i>
+            <span>Link</span>
+          </div>
+          <div class="link-modal-icon-option" data-icon="web">
+            <i class="fa-solid fa-globe"></i>
+            <span>Web</span>
+          </div>
+          <div class="link-modal-icon-option" data-icon="mail">
+            <i class="fa-solid fa-envelope"></i>
+            <span>Mail</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ボタン -->
+      <div class="link-modal-buttons">
+        <button class="link-modal-btn link-modal-btn-cancel" id="linkModalCancelBtn">キャンセル</button>
+        <button class="link-modal-btn link-modal-btn-save" id="linkModalSaveBtn">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 非表示のファイル入力 -->
+<input type="file" id="profilePhotoInput" style="display:none" accept="image/*">
+
+<!-- 固定保存ボタン（ホスト専用） -->
+<button class="fixed-save-btn host-only" id="saveProfileBtn">✓ 適用</button>

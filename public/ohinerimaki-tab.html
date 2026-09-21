@@ -1,0 +1,94 @@
+<!-- ohinerimaki-tab.html -->
+
+<div class="section">
+  <div class="section-title">💰 おひねり撒き</div>
+  <div class="small-text" style="margin-bottom: 20px;">
+    配信者への応援はこちらから！
+  </div>
+</div>
+
+<!-- リスナー用 -->
+<div class="section viewer-only-ui">
+  <div class="section-title">🔔 おひねり送信</div>
+
+  <div class="form-group">
+    <label for="ohinerimakiName">名前</label>
+    <input type="text" id="ohinerimakiName" placeholder="例：リスナー名">
+  </div>
+
+  <div class="form-group">
+    <label>アイコン選択</label>
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <label style="display: inline-flex; align-items: center; gap: 6px;">
+        <input type="radio" name="ohinerimakiIcon" value="gift" checked>
+        🎁 Amazonギフト
+      </label>
+      <label style="display: inline-flex; align-items: center; gap: 6px;">
+        <input type="radio" name="ohinerimakiIcon" value="money">
+        💰 その他
+      </label>
+      <input type="number" id="ohinerimakiAmount" min="1" max="50000" placeholder="金額（1〜50000円）" style="width: 200px;">
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="sendOhinerimakiBellBtn" style="width: 100%; padding: 12px; font-size: 16px;">
+    送信
+  </button>
+  <div class="small-text" id="ohinerimakiCooldown" style="margin-top: 8px;"></div>
+  <div class="small-text" style="margin-top: 8px; color: #d9534f;">
+    送信するとホストにはIPが通知されます
+  </div>
+</div>
+
+<!-- リスナー用：リンク表示 -->
+<div class="section viewer-only-ui" id="ohinerimakiLinksList">
+  <div class="section-title">🔗 応援リンク</div>
+  <div id="ohinerimakiLinksContainer"></div>
+</div>
+
+<!-- ホスト専用：リンク設定 -->
+<div class="section host-only-ui" id="ohinerimakiHostSettings">
+  <div class="section-title">⚙️ リンク設定</div>
+
+  <div class="form-group">
+    <label for="linkAmazonWishlist">Amazonほしいものリスト</label>
+    <input type="url" id="linkAmazonWishlist" placeholder="https://www.amazon.co.jp/...">
+  </div>
+
+  <div class="form-group">
+    <label for="linkAmazonGiftEmail">Amazonギフト券送付先メール</label>
+    <input type="email" id="linkAmazonGiftEmail" placeholder="example@example.com">
+  </div>
+
+  <div class="form-group">
+    <label>QRコード画像</label>
+    <input type="file" id="ohinerimakiQrInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display: none;">
+    <button class="btn btn-secondary" id="ohinerimakiQrSelectBtn" style="margin-top: 6px;">
+      画像を選択
+    </button>
+    <div id="ohinerimakiQrPreview" style="margin-top: 10px;"></div>
+    <div class="small-text" style="margin-top: 6px;">500KB以下の画像をアップロードできます</div>
+  </div>
+
+</div>
+
+<!-- ホスト専用：通知音設定 -->
+<div class="section host-only-ui" id="ohinerimakiSoundSettings">
+  <div class="section-title">🔊 通知音設定</div>
+  <div class="form-group">
+    <label for="ohinerimakiSoundVolume">音量: <span id="ohinerimakiSoundVolumeLabel">50</span>%</label>
+    <input type="range" id="ohinerimakiSoundVolume" min="0" max="100" value="50">
+  </div>
+  <button class="btn btn-secondary" id="ohinerimakiTestBellBtn" style="width: 100%; padding: 12px; font-size: 16px;">
+    テスト送信
+  </button>
+</div>
+
+<!-- ホスト専用：通知リスト -->
+<div class="section host-only-ui" id="ohinerimakiNotificationSection">
+  <div class="section-title">📋 通知リスト</div>
+  <div id="ohinerimakiNotificationList"></div>
+</div>
+
+<!-- 固定保存ボタン（ホスト専用） -->
+<button class="fixed-save-btn host-only-ui" id="saveOhinerimakiBtn">✓ 適用</button>
