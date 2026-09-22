@@ -16,7 +16,7 @@ function fetchYP(url) {
   return new Promise((resolve, reject) => {
     const client = url.startsWith('https') ? https : http;
     
-    client.get(url, (response) => {
+    const request = client.get(url, (response) => {
       let data = '';
       
       response.on('data', (chunk) => {
@@ -26,9 +26,8 @@ function fetchYP(url) {
       response.on('end', () => {
         resolve(data);
       });
-    }).on('error', (err) => {
-      reject(err);
-    });
+    }).on('error', reject);
+    request.setTimeout(CONFIG.API.YP_TIMEOUT, () => request.destroy(new Error('YP取得タイムアウト')));
   });
 }
 
@@ -66,6 +65,26 @@ function setupRoutes(
 
   const upnpPort = CONFIG.UPNP.PUBLIC_PORT || 7244;
   
+  // 管理操作はローカルのアプリ画面からのみ受け付ける。
+  app.use('/api', (req, res, next) => {
+    if (req.method === 'GET' || req.method === 'HEAD') return next();
+    const origin = req.headers.origin;
+    const expected = req.protocol + '://' + req.headers.host;
+    if (!isLocalRequest(req) || (origin && origin !== expected)) {
+      return res.status(403).json({ success: false, error: '管理操作はローカル接続のみ利用できます' });
+    }
+    next();
+  });
+  // アプリから接続したリスナーが取得する公開情報のみCORSを許可する。
+  app.get('/api/public/ohinerimaki-config', (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.json({ success: true, config: ohinerimakiConfig?.getConfig() || {} });
+  });
+  app.use((req, res, next) => {
+    if (/^\/(?:profile-config|stamp-config)\.json$/.test(req.path)) return res.sendStatus(404);
+    next();
+  });
+
   // ===== 静的ファイル配信 =====
   // ★ 画像フォルダを公開（プロフィール/Vcast）
   console.log(`[ROUTES] 画像フォルダを公開: ${CONFIG.SERVER.IMAGE_DIR}`);
@@ -81,7 +100,14 @@ function setupRoutes(
 
   // ★ スタンプフォルダを明示的に公開（CONFIG.SERVER.STAMP_DIRを使用）
   console.log(`[ROUTES] スタンプフォルダを公開: ${CONFIG.SERVER.STAMP_DIR}`);
-  app.use('/stamps', express.static(CONFIG.SERVER.STAMP_DIR));
+  app.use('/stamps', express.static(CONFIG.SERVER.STAMP_DIR, {
+    setHeaders(res, filename) {
+      // 再生成時にURLのvだけを更新する。旧URLは再検証可能なままにする。
+      if (res.req.query.v && /^\d+$/.test(String(res.req.query.v))) {
+        res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+      }
+    }
+  }));
 
   // public 配信は最後にして、/images や /stamps を優先させる
   app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -232,7 +258,7 @@ function setupRoutes(
     
     res.json({
       success: true,
-      config: stampConfig.getAll()
+      config: isLocalRequest(req) ? stampConfig.getAll() : (({ discordPassword, discordServerPasswords, ...config }) => config)(stampConfig.getAll())
     });
   });
 
@@ -408,7 +434,7 @@ function setupRoutes(
       return res.status(500).json({ success: false, error: 'プロフィール設定が利用できません' });
     }
 
-    const config = profileConfig.getAll();
+    const config = profileConfig.getPublic();
     const photo = config?.profile?.photo;
     if (imageStore.isImageDataUrl(photo)) {
       try {
@@ -587,6 +613,7 @@ function setupRoutes(
   });
 
   app.get('/api/ohinerimaki-notifications', (req, res) => {
+    if (!isLocalRequest(req)) return res.sendStatus(403);
     if (!ohinerimakiConfig) {
       return res.status(500).json({ success: false, error: 'おひねり通知が利用できません' });
     }

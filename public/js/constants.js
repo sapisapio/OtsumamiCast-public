@@ -22,7 +22,7 @@ export const URLS = {
   UPNP_OPEN: '/api/upnp/open',
   UPNP_CLOSE: '/api/upnp/close',
   PORT_CHECK: 'https://www.akakagemaru.info/port/tcpport.php',
-  LOCAL_SERVER: 'http://localhost:7244'
+  LOCAL_SERVER: window.location.origin
 };
 
 export const MESSAGES = {

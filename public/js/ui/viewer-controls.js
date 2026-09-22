@@ -13,6 +13,7 @@ export function initViewerControls() {
   initCustomIpButton();
   initOffsetSlider();
   initRefreshButton();
+  window.addEventListener('otsumamiTabReady', initRefreshButton);
   
   console.log('[ViewerControls] Initialized');
 }
@@ -75,7 +76,8 @@ function initOffsetSlider() {
 function initRefreshButton() {
   const refreshBtn = document.getElementById('refreshBtn');
   
-  if (!refreshBtn) return;
+  if (!refreshBtn || refreshBtn.dataset.refreshBound) return;
+  refreshBtn.dataset.refreshBound = 'true';
   
   refreshBtn.addEventListener('click', refreshView);
 }

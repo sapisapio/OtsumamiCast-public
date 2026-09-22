@@ -1,6 +1,8 @@
 const { contextBridge, shell, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  getServerPort: () => ipcRenderer.invoke('get-server-port'),
+  saveServerPort: (port) => ipcRenderer.invoke('save-server-port', port),
   // 外部ブラウザで開く
   openExternal: (url) => {
     // TODO(security): 将来的にドメイン制限や確認ダイアログの導入を検討する

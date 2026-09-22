@@ -49,7 +49,6 @@ function applyStampHandlers(manager) {
   manager.handleStamp = async function handleStamp(ws, message) {
     if (this.stampManager && message.payload && message.payload.filename) {
       await this.stampManager.updateStampUsage(message.payload.filename);
-      await this.broadcastStampList();
     }
 
     this.broadcast({
@@ -97,7 +96,6 @@ function applyStampHandlers(manager) {
         maxBytes
       );
 
-      const clientIp = this.normalizeAddress(ws?._socket?.remoteAddress || '');
 
       await this.stampManager.addStamp({
         id: stampInfo.id,
@@ -111,7 +109,6 @@ function applyStampHandlers(manager) {
         lastUsedAt: 0,
         sourceUrl: null,
         category: [],
-        addedIp: clientIp
       });
 
       console.log('? スタンプ追加成功:', stampInfo.filename);
@@ -201,7 +198,6 @@ function applyStampHandlers(manager) {
         }
       }
 
-      const clientIp = this.normalizeAddress(ws?._socket?.remoteAddress || '');
 
       await this.stampManager.addStamp({
         id: stampInfo.id,
@@ -215,7 +211,6 @@ function applyStampHandlers(manager) {
         lastUsedAt: 0,
         sourceUrl: discordUrl,
         category: [],
-        addedIp: clientIp
       });
 
       console.log('? Discord URLからスタンプ追加成功:', stampInfo.filename);
@@ -259,6 +254,13 @@ function applyStampHandlers(manager) {
   };
 
   manager.handleStampCategoryAdd = async function handleStampCategoryAdd(ws, message) {
+    if (!['host', 'viewer'].includes(this.clients.get(ws)?.role) ||
+        !Array.isArray(message.urls) || !message.urls.length || message.urls.length > 2000 ||
+        !this.stampConfig?.getCategories().some(c => c.id === message.category) ||
+        !this.checkRateLimit(ws, 'category', 60)) {
+      this.sendTo(ws, { type: 'error', message: 'カテゴリ操作が許可されていません' });
+      return;
+    }
     console.log(' カテゴリ追加:', message.category);
 
     if (!this.stampManager) return;
@@ -272,6 +274,13 @@ function applyStampHandlers(manager) {
   };
 
   manager.handleStampCategoryRemove = async function handleStampCategoryRemove(ws, message) {
+    if (!['host', 'viewer'].includes(this.clients.get(ws)?.role) ||
+        !Array.isArray(message.urls) || !message.urls.length || message.urls.length > 2000 ||
+        !this.stampConfig?.getCategories().some(c => c.id === message.category) ||
+        !this.checkRateLimit(ws, 'category', 60)) {
+      this.sendTo(ws, { type: 'error', message: 'カテゴリ操作が許可されていません' });
+      return;
+    }
     console.log(' カテゴリ除去:', message.category);
 
     if (!this.stampManager) return;
@@ -385,8 +394,7 @@ function applyStampHandlers(manager) {
         return acc;
       }, {});
       await this.stampManager.updateThumbnailUrlsByIds(thumbsById);
-      const stamps = this.stampManager.getStamps();
-      const updatedIds = stamps.map((stamp) => stamp.id);
+      const updatedIds = Object.keys(thumbsById);
       await this.stampManager.touchThumbnailUpdatedAtByIds(updatedIds);
       await this.broadcastStampList();
       this.sendTo(ws, {
@@ -482,7 +490,7 @@ function applyStampHandlers(manager) {
         return acc;
       }, {});
       await this.stampManager.updateThumbnailUrlsByIds(thumbsById);
-      await this.stampManager.touchThumbnailUpdatedAtByIds(stampIds);
+      await this.stampManager.touchThumbnailUpdatedAtByIds(Object.keys(thumbsById));
       await this.broadcastStampList();
       this.sendTo(ws, {
         type: 'stamp-thumb-regenerate-progress',

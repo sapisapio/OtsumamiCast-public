@@ -2,27 +2,11 @@ const { app, BrowserWindow, Menu, shell } = require('electron');
 const path = require('path');
 
 let mainWindow = null;
-const MAIN_URL = 'http://localhost:7244';
+
 const MAIN_FALLBACK = path.join(__dirname, '..', 'public', 'index.html');
 
-function loadWithRetry(targetWindow, url, fallbackPath, { retries = 5, delay = 1000 } = {}) {
-  const attemptLoad = (remaining) => {
-    targetWindow.loadURL(url).catch((error) => {
-      console.warn('[MAIN] loadURL 失敗', error);
-      if (remaining > 0) {
-        setTimeout(() => attemptLoad(remaining - 1), delay);
-        return;
-      }
-      if (fallbackPath) {
-        targetWindow.loadFile(fallbackPath).catch((fallbackError) => {
-          console.error('[MAIN] fallback loadFile 失敗', fallbackError);
-        });
-      }
-    });
-  };
-
-  attemptLoad(retries);
-}
+const loadWithRetry = require('./load-window');
+const { getLocalOrigin } = require('../config/app-settings');
 
 /**
  * メインウィンドウを作成
@@ -48,7 +32,7 @@ function createMainWindow() {
     backgroundColor: '#f0f0f0'
   });
 
-  loadWithRetry(mainWindow, MAIN_URL, MAIN_FALLBACK);
+  loadWithRetry(mainWindow, getLocalOrigin(), MAIN_FALLBACK);
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);

@@ -1,9 +1,9 @@
-const { BrowserWindow, screen } = require('electron');
+const { app, BrowserWindow, screen } = require('electron');
 const path = require('path');
 
 let indicatorWindow = null;
 let overlayWindow = null;
-const OVERLAY_BASE_URL = 'http://localhost:7244';
+
 
 function reinforceTopMost(targetWindow) {
   if (!targetWindow || targetWindow.isDestroyed()) return;
@@ -18,40 +18,51 @@ function reinforceTopMost(targetWindow) {
   }
 }
 
-function loadWithRetry(targetWindow, url, fallbackPath, { retries = 5, delay = 1000 } = {}) {
-  const attemptLoad = (remaining) => {
-    targetWindow.loadURL(url).catch((error) => {
-      console.warn('[OVERLAY] loadURL 失敗', error);
-      if (remaining > 0) {
-        setTimeout(() => attemptLoad(remaining - 1), delay);
-        return;
-      }
-      if (fallbackPath) {
-        targetWindow.loadFile(fallbackPath).catch((fallbackError) => {
-          console.error('[OVERLAY] fallback loadFile 失敗', fallbackError);
-        });
-      }
-    });
-  };
-
-  attemptLoad(retries);
-}
+const loadWithRetry = require('./load-window');
+const { getLocalOrigin } = require('../config/app-settings');
 
 // ★ 最後に選ばれたテーマを覚えておく
 let currentTheme = null;
+const { readSettings, writeSettings } = require('../config/app-settings');
+let saveTimer;
+function saveBounds() {
+  clearTimeout(saveTimer);
+  if (!overlayWindow || overlayWindow.isDestroyed() || !indicatorWindow || indicatorWindow.isDestroyed()) return;
+  try {
+    writeSettings(app.getPath('userData'), {
+      overlay: overlayWindow.getBounds(), indicator: indicatorWindow.getBounds()
+    });
+  } catch (error) { console.error('表示領域を保存できませんでした', error); }
+}
+function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveBounds, 200); }
+function savedLayout() {
+  const saved = readSettings(app.getPath('userData'));
+  const o = saved.overlay || {};
+  const i = saved.indicator || {};
+  const width = Number.isFinite(o.width) ? Math.max(200, Math.min(8192, Math.round(o.width))) : 600;
+  const height = Number.isFinite(o.height) ? Math.max(120, Math.min(8192, Math.round(o.height))) : 400;
+  const primary = screen.getPrimaryDisplay().workArea;
+  const point = { x: Number.isFinite(i.x) ? Math.round(i.x) : primary.x + primary.width - 270,
+    y: Number.isFinite(i.y) ? Math.round(i.y) : primary.y + 20 };
+  const visible = screen.getAllDisplays().some(({workArea: a}) =>
+    point.x + 140 > a.x && point.x < a.x + a.width && point.y + 24 > a.y && point.y < a.y + a.height);
+  if (!visible) { point.x = primary.x + primary.width - 270; point.y = primary.y + 20; }
+  return { width, height, ...point,
+    indicatorWidth: Number.isFinite(i.width) ? Math.max(140, Math.min(2000, Math.round(i.width))) : 250,
+    indicatorHeight: Number.isFinite(i.height) ? Math.max(24, Math.min(500, Math.round(i.height))) : 30 };
+}
 
 /**
  * インジケーターウィンドウを作成
  */
 function createIndicatorWindow() {
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width: screenWidth } = primaryDisplay.workAreaSize;
+  const saved = savedLayout();
   
   indicatorWindow = new BrowserWindow({
-    x: screenWidth - 250 - 20,  // 右端から250px+20px
-    y: 20,
-    width: 250,
-    height: 30,
+    x: saved.x,  // 右端から250px+20px
+    y: saved.y,
+    width: saved.indicatorWidth,
+    height: saved.indicatorHeight,
     title: '通知バー',
     frame: false,
     transparent: true,
@@ -67,7 +78,7 @@ function createIndicatorWindow() {
 
   loadWithRetry(
     indicatorWindow,
-    `${OVERLAY_BASE_URL}/indicator.html`,
+    `${getLocalOrigin()}/indicator.html`,
     path.join(__dirname, '..', 'public', 'indicator.html')
   );
   reinforceTopMost(indicatorWindow);
@@ -80,6 +91,7 @@ function createIndicatorWindow() {
     }
   });
   
+  indicatorWindow.on('close', saveBounds);
   indicatorWindow.on('closed', () => {
     if (overlayWindow) {
       overlayWindow.close();
@@ -93,6 +105,7 @@ function createIndicatorWindow() {
   
   // インジケーターをドラッグ → オーバーレイも追従（右端を揃える）
   indicatorWindow.on('move', () => {
+    scheduleSave();
     if (overlayWindow) {
       const [x, y] = indicatorWindow.getPosition();
       const [overlayWidth] = overlayWindow.getSize();
@@ -112,14 +125,15 @@ function createIndicatorWindow() {
  * オーバーレイウィンドウを作成
  */
 function createOverlayWindow() {
+  const saved = savedLayout();
   const [indX, indY] = indicatorWindow.getPosition();
   const [indWidth, indHeight] = indicatorWindow.getSize();
   
   overlayWindow = new BrowserWindow({
-    x: indX + indWidth - 600,  // 右端を揃える（左に出っ張る）
+    x: indX + indWidth - saved.width,  // 右端を揃える（左に出っ張る）
     y: indY + indHeight - 2,   // ★ ここも高さ基準で 2px 詰め
-    width: 600,
-    height: 400,
+    width: saved.width,
+    height: saved.height,
     title: '表示部',
     frame: false,
     transparent: true,
@@ -135,7 +149,7 @@ function createOverlayWindow() {
 
   loadWithRetry(
     overlayWindow,
-    `${OVERLAY_BASE_URL}/overlay.html`,
+    `${getLocalOrigin()}/overlay.html`,
     path.join(__dirname, '..', 'public', 'overlay.html')
   );
   reinforceTopMost(overlayWindow);
@@ -151,6 +165,9 @@ function createOverlayWindow() {
     }
   });
 
+  overlayWindow.on('resize', scheduleSave);
+  overlayWindow.on('move', scheduleSave);
+  overlayWindow.on('close', saveBounds);
   overlayWindow.on('closed', () => {
     overlayWindow = null;
   });
@@ -164,6 +181,9 @@ function createOverlayWindow() {
  * オーバーレイをリサイズ（右端固定、左端を動かす）
  */
 function resizeOverlay(width, height) {
+  if (!Number.isFinite(width) || !Number.isFinite(height)) return;
+  width = Math.max(200, Math.min(8192, width));
+  height = Math.max(120, Math.min(8192, height));
   if (overlayWindow && indicatorWindow) {
     const [indX, indY] = indicatorWindow.getPosition();
     const [indWidth, indHeight] = indicatorWindow.getSize();
@@ -254,6 +274,7 @@ function openOverlay() {
  * オーバーレイを閉じる
  */
 function closeOverlay() {
+  saveBounds();
   if (overlayWindow) {
     overlayWindow.close();
     overlayWindow = null;

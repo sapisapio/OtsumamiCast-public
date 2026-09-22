@@ -87,7 +87,7 @@ class StampManager {
    * スタンプ一覧を取得
    */
   getStamps() {
-    return this.stampList.stamps.filter(s => s && s.enabled !== false);
+    return this.stampList.stamps.filter(s => s && s.enabled !== false).map(({ addedIp, sourceUrl, ...stamp }) => stamp);
   }
 
   /**
@@ -122,7 +122,7 @@ class StampManager {
       lastUsedAt: 0,
       sourceUrl: stampInfo.sourceUrl || null,
       category: stampInfo.category || [],
-      addedIp: stampInfo.addedIp || null
+
     });
 
     await this.save();

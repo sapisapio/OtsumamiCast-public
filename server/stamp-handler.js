@@ -4,6 +4,11 @@ const fsSync = require('fs');
 const path = require('path');
 const https = require('https');
 const { spawn } = require('child_process');
+function mediaTool(name) {
+  const filename = process.platform === 'win32' ? name + '.exe' : name;
+  const bundled = path.join(__dirname, '..', 'ffmpeg-bin', filename);
+  return fsSync.existsSync(bundled) ? bundled : name;
+}
 
 class StampHandler {
   constructor(stampDir, options = {}) {
@@ -119,7 +124,7 @@ class StampHandler {
       const metadata = await sharp(srcPath, { animated: true }).metadata();
       const isAnimated = (metadata.pages || 1) > 1;
       if (isAnimated) {
-        await sharp(srcPath, { animated: true, page: 0 })
+        await sharp(srcPath, { page: 0, pages: 1 })
           .resize(size, size, resizeOptions)
           .png({ compressionLevel: 9 })
           .toFile(thumbPath);
@@ -218,7 +223,7 @@ class StampHandler {
 
     try {
       await new Promise((resolve, reject) => {
-        const ffmpeg = spawn('ffmpeg', [
+        const ffmpeg = spawn(mediaTool('ffmpeg'), [
           '-ss', '0',
           '-t', '2',
           '-i', videoPath,
@@ -226,8 +231,9 @@ class StampHandler {
           '-loop', '0',
           '-y',
           thumbPath
-        ]);
+        ], { windowsHide: true });
 
+        ffmpeg.once('error', reject);
         ffmpeg.on('close', (code) => {
           if (code === 0) {
             resolve();
@@ -253,15 +259,16 @@ class StampHandler {
     const thumbPath = this.getThumbPath(stampId, '.png');
 
     await new Promise((resolve, reject) => {
-      const ffmpeg = spawn('ffmpeg', [
+      const ffmpeg = spawn(mediaTool('ffmpeg'), [
         '-ss', '0',
         '-i', videoPath,
         '-frames:v', '1',
         '-vf', `scale=${size}:${size}:force_original_aspect_ratio=decrease:flags=lanczos,pad=${size}:${size}:(ow-iw)/2:(oh-ih)/2:color=black`,
         '-y',
         thumbPath
-      ]);
+      ], { windowsHide: true });
 
+      ffmpeg.once('error', reject);
       ffmpeg.on('close', (code) => {
         if (code === 0) {
           resolve();
@@ -396,13 +403,13 @@ class StampHandler {
    */
   async getVideoMetadata(videoPath) {
     return new Promise((resolve, reject) => {
-      const ffprobe = spawn('ffprobe', [
+      const ffprobe = spawn(mediaTool('ffprobe'), [
         '-v', 'error',
         '-select_streams', 'v:0',
         '-show_entries', 'stream=width,height,duration',
         '-of', 'json',
         videoPath
-      ]);
+      ], { windowsHide: true });
 
       let output = '';
 
@@ -410,6 +417,7 @@ class StampHandler {
         output += data.toString();
       });
 
+      ffprobe.once('error', reject);
       ffprobe.on('close', (code) => {
         if (code !== 0) {
           reject(new Error(`ffprobe exited with code ${code}`));

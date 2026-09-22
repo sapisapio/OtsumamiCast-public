@@ -1,9 +1,11 @@
+import { resolveAsset } from './connection-target.js';
 // js/stamps.js
 // ==============================
 // スタンプ一覧・送信まわり
 // ==============================
 let currentCategoryFilter = "";
 let CATEGORY_MAP = {};
+let categorySignature = null;
 let editMode = false;
 let role = null; // 'host' or 'viewer'
 if (window.stampEditMode === undefined) {
@@ -11,7 +13,10 @@ if (window.stampEditMode === undefined) {
 }
 
 function updateCategories(categories) {
-  CATEGORY_MAP = {};
+  const signature = JSON.stringify(categories);
+  if (signature === categorySignature) return;
+  categorySignature = signature;
+  CATEGORY_MAP = Object.create(null);
   if (Array.isArray(categories)) {
     categories.forEach(c => {
       if (c && c.id && c.label) {
@@ -19,7 +24,13 @@ function updateCategories(categories) {
       }
     });
   }
+  renderCategoryUI();
+}
+
+function renderCategoryUI() {
   renderCategoryFilterButtons();
+  renderCategorySelectOptions();
+  renderCategoryListForHost();
 }
 
 function renderCategoryFilterButtons() {
@@ -48,11 +59,13 @@ function renderCategoryFilterButtons() {
 function renderCategorySelectOptions() {
   const select = document.getElementById('stampCategorySelect');
   if (!select) return;
+  const selected = new Set([...select.selectedOptions].map(option => option.value));
   select.innerHTML = '';
   Object.keys(CATEGORY_MAP).forEach(id => {
     const opt = document.createElement('option');
     opt.value = id;
     opt.textContent = CATEGORY_MAP[id];
+    opt.selected = selected.has(id);
     select.appendChild(opt);
   });
 }
@@ -257,15 +270,7 @@ function hideThumbHoverPreview() {
 
 const THUMB_HOVER_ZOOM_SIZE = 256;
 
-function resolveAbsoluteStampAssetUrl(rawUrl) {
-  if (!rawUrl || typeof rawUrl !== 'string') return '';
-  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
-  try {
-    return new URL(rawUrl, window.location.origin).toString();
-  } catch (error) {
-    return rawUrl;
-  }
-}
+function resolveAbsoluteStampAssetUrl(url) { return resolveAsset(url); }
 
 function resolveHoverZoomImageUrl(url, info) {
   const thumbVersion = info && Number.isFinite(Number(info.thumbUpdatedAt))
@@ -274,7 +279,8 @@ function resolveHoverZoomImageUrl(url, info) {
 
   const appendVersion = (rawUrl) => {
     if (!rawUrl) return '';
-    return `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}v=${thumbVersion || Date.now()}`;
+    const resolved = resolveAsset(rawUrl);
+    return thumbVersion ? `${resolved}${resolved.includes('?') ? '&' : '?'}v=${thumbVersion}` : resolved;
   };
 
   // 動画は静止画サムネイルを拡大表示
@@ -320,7 +326,9 @@ function positionThumbHoverPreview(event) {
 function attachStampHoverZoom(thumbEl, url, info) {
   if (!isThumbnailHoverZoomEnabled()) return;
 
+  let hovering = false;
   const showPreview = (event) => {
+    hovering = true;
     if (thumbEl.classList.contains('dragging')) return;
 
     const preview = ensureThumbHoverPreviewElement();
@@ -329,6 +337,7 @@ function attachStampHoverZoom(thumbEl, url, info) {
     if (!src) return;
 
     const showAtCursor = (cursorEvent) => {
+      if (!hovering) return;
       preview.classList.add('visible');
       positionThumbHoverPreview(cursorEvent);
     };
@@ -356,7 +365,7 @@ function attachStampHoverZoom(thumbEl, url, info) {
     if (!thumbHoverPreviewEl?.classList.contains('visible')) return;
     positionThumbHoverPreview(event);
   });
-  thumbEl.addEventListener('mouseleave', hideThumbHoverPreview);
+  thumbEl.addEventListener('mouseleave', () => { hovering = false; hideThumbHoverPreview(); });
 }
 
 function resolvePreviewThumbUrl(info) {
@@ -369,7 +378,8 @@ function resolvePreviewThumbUrl(info) {
 
   const appendVersion = (rawUrl) => {
     if (!rawUrl) return '';
-    return `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}v=${thumbVersion || Date.now()}`;
+    const resolved = resolveAsset(rawUrl);
+    return thumbVersion ? `${resolved}${resolved.includes('?') ? '&' : '?'}v=${thumbVersion}` : resolved;
   };
 
   if (useStatic) {
@@ -395,7 +405,7 @@ function createStampPreviewMedia(url, info) {
 
   const img = document.createElement('img');
   const previewThumbUrl = resolvePreviewThumbUrl(info);
-  const src = previewThumbUrl || (!isAnimatedSource || useStaticPreview ? url : '');
+  const src = previewThumbUrl || (!isAnimatedSource ? resolveAsset(url) : '');
 
   img.src = src;
   img.alt = url;
@@ -403,16 +413,9 @@ function createStampPreviewMedia(url, info) {
 
   img.addEventListener('error', () => {
     if (img.dataset.fallbackApplied === 'true') return;
-    if (!url) return;
-    if (useStaticPreview && info && info.thumbUrl && img.src !== info.thumbUrl) {
-      img.dataset.fallbackApplied = 'true';
-      img.src = resolvePreviewThumbUrl({ ...info, staticThumbUrl: null });
-      return;
-    }
-    if (!useStaticPreview && isAnimatedSource) return;
-    if (img.src === url) return;
     img.dataset.fallbackApplied = 'true';
-    img.src = url;
+    const fallback = info?.thumbUrl ? resolveAsset(info.thumbUrl) : (!isAnimatedSource ? resolveAsset(url) : '');
+    if (fallback && img.src !== fallback) img.src = fallback;
   });
 
   return img;
@@ -810,3 +813,5 @@ Object.defineProperty(window.otsumamiStamp, 'CATEGORY_MAP', {
   get() { return CATEGORY_MAP; },
   enumerable: true
 });
+
+window.otsumamiStamp.renderCategoryUI = renderCategoryUI;

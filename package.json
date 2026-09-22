@@ -1,6 +1,6 @@
 {
   "name": "otsumamicast",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "YouTube同期視聴デスクトップアプリ - PeerCast配信者向けツール",
   "main": "electron-main.js",
   "author": "sapisapio",
@@ -8,12 +8,13 @@
   "scripts": {
     "dev:server": "node server/index.js",
     "dev:client": "electron .",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev": "electron .",
     "start": "electron .",
     "build": "electron-builder",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux"
+    "build:linux": "electron-builder --linux",
+    "test": "node --test tests/*.test.cjs"
   },
   "keywords": [
     "youtube",
@@ -29,7 +30,6 @@
     "ws": "^8.14.2"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
     "electron": "^39.1.1",
     "electron-builder": "^23.6.0"
   },
@@ -46,15 +46,22 @@
       "config/**/*",
       "ipc/**/*",
       "windows/**/*",
-      "node_modules/**/*"
+      "!server/data/**",
+      "!public/*-config.json",
+      "!public/stamps/**",
+      "!public/images/profile-photo*",
+      "!public/images/vcast-avatar*",
+      "!public/images/ohinerimaki-qr*"
     ],
-      "extraResources": [
-    {
-      "from": "ffmpeg-bin/",
-      "to": "app/ffmpeg-bin",
-      "filter": ["**/*"]
-    }
-  ],
+    "extraResources": [
+      {
+        "from": "ffmpeg-bin/",
+        "to": "app/ffmpeg-bin",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
     "directories": {
       "output": "dist"
     },
@@ -62,15 +69,17 @@
       "target": "nsis",
       "icon": "public/icon.ico"
     },
-      "nsis": {
-    "oneClick": false,                         
-    "perMachine": false,
-    "allowElevation": false,
-    "allowToChangeInstallationDirectory": true,
-    "createDesktopShortcut": true,
-    "createStartMenuShortcut": true,
-    "shortcutName": "おつまみキャスト"
-  },
+    "nsis": {
+      "installerIcon": "public/icon.ico",
+      "uninstallerIcon": "public/icon.ico",
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "おつまみキャスト"
+    },
     "mac": {
       "target": "dmg",
       "icon": "public/icon.icns"
@@ -81,3 +90,4 @@
     }
   }
 }
+

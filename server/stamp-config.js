@@ -324,10 +324,10 @@ class StampConfig {
   }
 
   async addCategory(id, label) {
-    if (!id || typeof id !== 'string') {
+    if (typeof id !== 'string' || !/^[a-zA-Z0-9_-]{1,40}$/.test(id) || ['all', '__proto__', 'constructor', 'prototype'].includes(id)) {
       throw new Error('カテゴリIDが不正です');
     }
-    if (!label || typeof label !== 'string') {
+    if (!label || typeof label !== 'string' || label.length > 80) {
       throw new Error('カテゴリラベルが不正です');
     }
     if (!Array.isArray(this.config.categories)) {

@@ -116,6 +116,11 @@ class ProfileConfig {
     return this.config;
   }
 
+  getPublic() {
+    const { profile, features } = this.config;
+    return { profile, features };
+  }
+
   getBannedIps() {
     return Array.isArray(this.config.bannedIps) ? this.config.bannedIps : [];
   }

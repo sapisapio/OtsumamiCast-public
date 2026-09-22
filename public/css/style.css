@@ -485,14 +485,14 @@ input[type="range"]::-moz-range-thumb {
 
 /* Firefox */
 body, body * {
-//  scrollbar-width: none !important;
+
 }
 
 /* Chromium / Electron */
 ::-webkit-scrollbar {
-//  width: 0 !important;
-//  height: 0 !important;
-//  display: none !important;
+
+
+
 }
 
 @keyframes vcast-tier-pulse {
@@ -570,7 +570,7 @@ body, body * {
 }
 
 .stamp-thumb.is-video::after {
-  content: '?';
+  content: '▶';
   position: absolute;
   bottom: 4px;
   right: 4px;

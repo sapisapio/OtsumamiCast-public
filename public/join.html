@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https: http://localhost:* http://127.0.0.1:* http://*:7244 blob:; media-src 'self' https: http://localhost:* http://127.0.0.1:* http://*:7244 blob:; connect-src 'self' ws://localhost:* ws://127.0.0.1:* ws://*:7244 http://localhost:* http://127.0.0.1:* http://*:7244 https://www.youtube.com https://cdn.discordapp.com https://media.discordapp.net http://bayonet.ddo.jp https://p-at.net; font-src 'self' data: https://cdnjs.cloudflare.com; frame-src https://www.youtube.com; object-src 'none'; base-uri 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.youtube.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https: http://localhost:* http://127.0.0.1:* http://*:* blob:; media-src 'self' https: http://localhost:* http://127.0.0.1:* http://*:* blob:; connect-src 'self' ws://localhost:* ws://127.0.0.1:* ws://*:* wss://*:* http://localhost:* http://127.0.0.1:* http://*:* https://www.youtube.com https://cdn.discordapp.com https://media.discordapp.net http://bayonet.ddo.jp https://p-at.net; font-src 'self' data: https://cdnjs.cloudflare.com; frame-src https://www.youtube.com; object-src 'none'; base-uri 'self';">
   <title>おつまみキャスト - リスナー</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
@@ -121,7 +121,7 @@
       
       // URLからIPとポートを取得
       let hostIp = resolveJoinTarget();
-      const hostPort = location.port || '7244';
+      const hostPort = location.port || (location.protocol === 'https:' ? '443' : '80');
       
       // ★ localhost テスト用：localhost の場合は 127.0.0.1 に変換
       if (hostIp === 'localhost') {
@@ -146,7 +146,7 @@
         }
         
         // ★ WebSocket接続処理を直接実行
-        const wsUrl = `ws://${hostIp}:${hostPort}`;
+        const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${hostIp}:${hostPort}`;
         console.log('[Join] WebSocket接続開始:', wsUrl);
         
         const ws = new WebSocket(wsUrl);

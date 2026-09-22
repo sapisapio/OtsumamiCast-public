@@ -15,12 +15,16 @@ export function initStampsTab() {
   
   // 設定の読み込み
   loadStampSettings();
+  window.otsumamiStamp?.renderCategoryUI?.();
+  window.addEventListener('websocket-message', event => {
+    if (event.detail?.type === 'stamp-config' && window.otsumamiRole === 'viewer') loadStampSettings();
+  });
   
   // ホスト設定セクションの表示制御
   updateHostSettingsSectionVisibility();
   
   // ロール変更イベントのリスナー登録
-  window.addEventListener('otsumamiRoleChanged', updateHostSettingsSectionVisibility);
+  window.addEventListener('otsumamiRoleChanged', () => { updateHostSettingsSectionVisibility(); loadStampSettings(); });
   
   // ★ 追加：既に受信済みのスタンプリストを再描画
   if (window.otsumamiStamp && typeof window.otsumamiStamp.renderStampList === 'function') {
@@ -129,8 +133,10 @@ function initSliders() {
  */
 async function loadStampSettings() {
   try {
-    const response = await fetch('/api/stamp-config');
-    const data = await response.json();
+    const isViewer = (window.state?.role || window.otsumamiRole) === 'viewer';
+    const data = isViewer
+      ? { success: true, config: window.otsumamiRemoteStampConfig || {} }
+      : await (await fetch('/api/stamp-config')).json();
 
     if (data.success) {
       const config = data.config;
@@ -144,7 +150,7 @@ async function loadStampSettings() {
       
       // 最大スタンプ数を設定
       let stampValue = 100;
-      if (config.maxStampCount === 'unlimited') {
+      if (config.maxStampCount === 'unlimited' || config.maxStampCount === 0) {
         stampValue = 1100;
         document.getElementById('stampCountValue').textContent = '無制限';
         document.getElementById('stampCountDisplay').textContent = '無制限';
@@ -167,6 +173,12 @@ async function loadStampSettings() {
         permissionRadio.checked = true;
       }
       
+      const soundRadio = [...document.querySelectorAll('input[name="stampSound"]')].find(el => el.value === (config.stampSound || 'sound1'));
+      if (soundRadio) soundRadio.checked = true;
+      const soundVolume = document.getElementById('stampSoundVolume');
+      if (soundVolume) soundVolume.value = config.stampSoundVolume ?? 50;
+      const soundLabel = document.getElementById('soundVolumeValue');
+      if (soundLabel) soundLabel.textContent = String(config.stampSoundVolume ?? 50);
       // 音量
       if (config.videoVolume !== undefined) {
         document.getElementById('videoStampVolume').value = config.videoVolume;
@@ -220,6 +232,7 @@ async function loadStampSettings() {
       }
       
       if (window.electronAPI && window.electronAPI.sendToOverlay) {
+        window.electronAPI.sendToOverlay('send-stamp-sound', { sound: config.stampSound || 'sound1', volume: config.stampSoundVolume ?? 50 });
         window.electronAPI.sendToOverlay('send-video-volume', {
           volume: config.videoVolume ?? 50,
           muted: config.muteVideo ?? false
@@ -311,6 +324,8 @@ window.saveAllSettings = async function() {
         muteVideo: muteVideo,
         stampDuration: stampDuration,
         stampBaseSize: stampBaseSize,
+        stampSound,
+        stampSoundVolume,
         staticThumbnailPreview: staticThumbnailPreview,
         thumbnailHoverZoom: thumbnailHoverZoom
       })
@@ -374,6 +389,7 @@ function initStaticThumbnailPreviewControl() {
       window.otsumamiStamp.renderStampList();
     }
 
+    if (window.otsumamiRole !== 'host') return;
     try {
       await fetch('/api/stamp-config/save-all', {
         method: 'POST',
@@ -523,8 +539,7 @@ function initStampManagementUI() {
       // リスナーの場合、ホスト設定を確認
       if (r === 'viewer') {
         try {
-          const response = await fetch('/api/stamp-config');
-          const data = await response.json();
+          const data = { success: !!window.otsumamiRemoteStampConfig, config: window.otsumamiRemoteStampConfig };
           
           if (!data.success) {
             alert('ホスト設定を取得できません');
@@ -538,15 +553,12 @@ function initStampManagementUI() {
             return;
           }
           
-          if (hostConfig.discordPassword) {
+          if (hostConfig.passwordRequired) {
             const passwordInput = prompt('このスタンプを追加するにはパスワードが必要です。\nパスワードを入力してください:');
             if (passwordInput === null) {
               return;
             }
-            if (passwordInput !== hostConfig.discordPassword) {
-              alert('パスワードが間違っています');
-              return;
-            }
+
             viewerPassword = passwordInput;
           }
         } catch (error) {

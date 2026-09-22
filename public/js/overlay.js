@@ -996,3 +996,14 @@ if (window.electronAPI && typeof window.electronAPI.onVcastState === 'function')
 } else {
   console.warn('[Overlay] electronAPI.onVcastState が利用できません');
 }
+
+// ウィンドウの再作成時も、保存済み設定を読み込む。
+fetch('/api/stamp-config').then(response => response.json()).then(({ config }) => {
+  if (!config) return;
+  stampSoundConfig.selectedSound = config.stampSound || 'sound1';
+  stampSoundConfig.volume = (config.stampSoundVolume ?? 50) / 100;
+  videoStampVolume = (config.videoVolume ?? 50) / 100;
+  videoStampMuted = !!config.muteVideo;
+  stampDuration = (config.stampDuration ?? 3) * 1000;
+  stampBaseSize = config.stampBaseSize ?? 220;
+}).catch(error => console.error('スタンプ設定の読み込みに失敗しました', error));
