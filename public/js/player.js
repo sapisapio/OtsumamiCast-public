@@ -1,9 +1,11 @@
+import { scheduleQueueAutoplay, resetQueueAutoplay } from './queue-autoplay.js';
 import { state, logStatus, parseVideoId } from './main.js';
 
 // ===== YouTube Iframe API =====
 export function onYouTubeIframeAPIReady() {
   const playerDiv = state.role === 'host' ? 'playerHost' : 'playerViewer';
   
+  if (state.player || !document.getElementById(playerDiv)) return;
   state.player = new YT.Player(playerDiv, {
     height: '100%',
     width: '100%',
@@ -41,6 +43,9 @@ export function initPlayerIfReady() {
 
 function onPlayerReady() {
   logStatus("プレイヤー準備OK");
+  if (state.role === 'viewer' && state.lastSyncPayload) {
+    import('./websocket.js').then(({ applySync }) => applySync(state.lastSyncPayload, true));
+  }
 }
 
 function onPlayerStateChange(event) {
@@ -59,19 +64,14 @@ function onPlayerStateChange(event) {
     if (state.videoQueue && state.videoQueue.length > 0) {
       console.log('→ キューに動画あり、次の動画を自動再生');
       
-      setTimeout(() => {
-        if (state.ws && state.ws.readyState === WebSocket.OPEN) {
-          state.ws.send(JSON.stringify({
-            type: 'play-next'
-          }));
-        }
-      }, 1000); // 1秒待ってから次へ
+      scheduleQueueAutoplay(state); // 1秒待ってから次へ
     } else {
       console.log('→ キューは空です');
     }
   }
 
   if (playerState === YT.PlayerState.PLAYING) {
+    resetQueueAutoplay();
     if (state.syncInterval) clearInterval(state.syncInterval);
     state.syncInterval = setInterval(() => {
       if (!state.ws || state.ws.readyState !== WebSocket.OPEN) return;

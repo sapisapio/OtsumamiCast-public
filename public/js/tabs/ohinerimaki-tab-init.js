@@ -1,3 +1,4 @@
+import { resolveAsset } from '../connection-target.js';
 // js/tabs/ohinerimaki-tab-init.js
 // おひねり撒きタブ専用の初期化処理
 
@@ -30,7 +31,8 @@ export async function initOhinerimakiTab() {
   updateHostOnlyUI();
   setupCooldownState();
 
-  window.addEventListener('otsumamiRoleChanged', updateHostOnlyUI);
+  window.addEventListener('otsumamiRoleChanged', () => { updateHostOnlyUI(); loadOhinerimakiConfig(); });
+  window.addEventListener('websocket-message', event => { if (event.detail?.type === 'joined') loadOhinerimakiConfig(); });
 
   window.otsumamiOhinerimaki = {
     handleBell: (payload) => {
@@ -50,10 +52,12 @@ export async function initOhinerimakiTab() {
 
 async function loadOhinerimakiConfig() {
   try {
-    const response = await fetch('/api/ohinerimaki-config');
+    const viewer = window.otsumamiRole === 'viewer';
+    const response = await fetch(viewer ? resolveAsset('/api/public/ohinerimaki-config') : '/api/ohinerimaki-config');
     const data = await response.json();
     if (data?.config) {
       ohinerimakiConfig = data.config;
+      if (viewer && ohinerimakiConfig.links?.qrImage) ohinerimakiConfig.links.qrImage = resolveAsset(ohinerimakiConfig.links.qrImage);
     }
     applyConfigToUI();
     renderLinks();
@@ -63,6 +67,7 @@ async function loadOhinerimakiConfig() {
 }
 
 async function loadOhinerimakiNotifications() {
+  if (window.otsumamiRole !== 'host') return;
   try {
     const response = await fetch('/api/ohinerimaki-notifications');
     const data = await response.json();

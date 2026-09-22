@@ -4,7 +4,7 @@
  * Electronアプリケーションの起動・管理
  */
 
-const { app, BrowserWindow } = require('electron');
+const { app, dialog } = require('electron');
 const path = require('path');
 
 if (process.platform === 'win32') {
@@ -18,6 +18,12 @@ if (!gotTheLock) {
   return;
 }
 
+const settings = require('./config/app-settings');
+process.env.OTS_USER_DATA = app.getPath('userData');
+const savedSettings = settings.readSettings(process.env.OTS_USER_DATA);
+process.env.PORT = String(settings.validPort(process.env.PORT) ? Number(process.env.PORT) :
+  (settings.validPort(savedSettings.port) ? Number(savedSettings.port) : 7244));
+
 // ウィンドウ管理モジュール
 const mainWindow = require('./windows/main-window');
 const videoWindow = require('./windows/video-window');
@@ -27,6 +33,7 @@ const overlayManager = require('./windows/overlay-manager');
 const { registerIpcHandlers } = require('./ipc/handlers');
 
 let serverStarted = false;
+let serverModule;
 let mainBrowserWindow;
 
 /**
@@ -45,23 +52,22 @@ function startServer() {
   console.log('[MAIN] userData パス:', process.env.OTS_USER_DATA);
   console.log('[MAIN] server/index.js を起動します...');
   
-  // server/index.js を require（startServerWrapper が自動実行される）
-  require(path.join(__dirname, 'server', 'index.js'));
+  // サーバーの待受開始を待ってから画面を作成する
+  serverModule = require(path.join(__dirname, 'server', 'index.js'));
+  return serverModule.ready;
 }
 
 /**
  * アプリ初期化
  */
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   console.log('[MAIN] アプリ準備完了');
   console.log('[MAIN] isPackaged:', app.isPackaged);
 
-  // ★ パッケージ版のみサーバーを起動
-  if (app.isPackaged) {
-    console.log('[MAIN] パッケージ版 → 内蔵サーバーを起動');
-    startServer();
-  } else {
-    console.log('[MAIN] 開発モード → 外部サーバー使用（npm run dev:server）');
+  try { await startServer(); } catch (error) {
+    dialog.showErrorBox('サーバーを起動できません', 'ポート ' + process.env.PORT + ' を使用できません。別のアプリが使用していないか確認してください。\n設定ファイル: ' + path.join(app.getPath('userData'), 'app-settings.json') + '\n' + error.message);
+    app.exit(1);
+    return;
   }
 
   // メインウィンドウ作成
@@ -100,7 +106,11 @@ app.on('window-all-closed', () => {
 /**
  * アプリ終了前にオーバーレイを閉じる
  */
-app.on('before-quit', () => {
-  console.log('[MAIN] アプリ終了処理...');
+let quitting = false;
+app.on('before-quit', (event) => {
   overlayManager.closeOverlay();
+  if (quitting || !serverModule) return;
+  event.preventDefault();
+  quitting = true;
+  serverModule.shutdown().catch(console.error).finally(() => app.quit());
 });

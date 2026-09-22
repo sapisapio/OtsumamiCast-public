@@ -4,11 +4,23 @@ const fs = require('fs');
 const path = require('path');
 
 // ★ 開発時のスタンプフォルダは public/stamps に統一
-const stampDir = path.join(app.getAppPath(), 'public', 'stamps');
+const stampDir = require('../config/default').SERVER.STAMP_DIR;
+const settings = require('../config/app-settings');
 /**
  * IPCハンドラーを登録
  */
 function registerIpcHandlers(mainWindow, videoWindow, overlayManager) {
+  const isMain = (event) => event.sender === mainWindow.getMainWindow()?.webContents &&
+    event.senderFrame?.url?.startsWith(settings.getLocalOrigin() + '/');
+  ipcMain.handle('get-server-port', (event) => {
+    if (!isMain(event)) throw new Error('許可されていない画面です');
+    return { current: settings.getPort(), saved: settings.readSettings(app.getPath('userData')).port || settings.getPort() };
+  });
+  ipcMain.handle('save-server-port', (event, port) => {
+    if (!isMain(event) || !settings.validPort(port)) throw new Error('ポートは1〜65535で指定してください');
+    settings.writeSettings(app.getPath('userData'), { port: Number(port) });
+    return { saved: Number(port) };
+  });
   // ===== メインウィンドウ制御 =====
   
   ipcMain.on('minimize-window', () => {

@@ -2,27 +2,11 @@ const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
 let videoWindow = null;
-const VIDEO_URL = 'http://localhost:7244/video.html';
+
 const VIDEO_FALLBACK = path.join(__dirname, '..', 'public', 'video.html');
 
-function loadWithRetry(targetWindow, url, fallbackPath, { retries = 5, delay = 1000 } = {}) {
-  const attemptLoad = (remaining) => {
-    targetWindow.loadURL(url).catch((error) => {
-      console.warn('[VIDEO] loadURL 失敗', error);
-      if (remaining > 0) {
-        setTimeout(() => attemptLoad(remaining - 1), delay);
-        return;
-      }
-      if (fallbackPath) {
-        targetWindow.loadFile(fallbackPath).catch((fallbackError) => {
-          console.error('[VIDEO] fallback loadFile 失敗', fallbackError);
-        });
-      }
-    });
-  };
-
-  attemptLoad(retries);
-}
+const loadWithRetry = require('./load-window');
+const { getLocalOrigin } = require('../config/app-settings');
 
 /**
  * 動画ウィンドウを作成
@@ -49,7 +33,7 @@ function createVideoWindow() {
     title: '動画ウィンドウ'
   });
   
-  loadWithRetry(videoWindow, VIDEO_URL, VIDEO_FALLBACK);
+  loadWithRetry(videoWindow, `${getLocalOrigin()}/video.html`, VIDEO_FALLBACK);
   
   videoWindow.on('closed', () => {
     videoWindow = null;

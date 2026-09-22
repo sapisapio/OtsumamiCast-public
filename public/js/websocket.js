@@ -1,3 +1,5 @@
+import { scheduleQueueAutoplay, resetQueueAutoplay } from './queue-autoplay.js';
+import { connectionUrl, resolveAsset } from './connection-target.js';
 import { state, logStatus } from './main.js';
 
 // ===== YP関連 =====
@@ -63,105 +65,32 @@ export function connectWs(customIp = null) {
   window.isHost = (state.role === 'host');
   
   let wsUrl;
-  
-  if (state.role === 'host') {
-    if (!state.hosting) {
-      // ★ alertWithFocus を使用
-      if (window.alertWithFocus) {
-        window.alertWithFocus('先にホスト開始してください');
-      } else {
-        alert('先にホスト開始してください');
-      }
-      return;
+  try {
+    if (state.role === 'host') {
+      if (!state.hosting) return;
+      wsUrl = connectionUrl(window.location.origin);
+    } else {
+      const params = new URLSearchParams(window.location.search);
+      const target = customIp || params.get('host') || params.get('ip') || params.get('target') ||
+        document.getElementById('hostSelect')?.value ||
+        (!window.electronAPI ? window.location.origin : '');
+      if (!target) { alert('配信者のURLまたはIP:ポートを入力してください'); return; }
+      wsUrl = connectionUrl(target);
     }
-    wsUrl = 'ws://localhost:7244';
-  } else {
-    let targetIp = customIp;
-    let targetPort = '7244';
-
-    const normalizeTarget = (rawTarget) => {
-      if (!rawTarget || typeof rawTarget !== 'string') {
-        return null;
-      }
-      const input = rawTarget.trim();
-      if (!input) return null;
-
-      try {
-        const asUrl = /^wss?:\/\//i.test(input) ? new URL(input) : new URL(`http://${input}`);
-        return {
-          host: asUrl.hostname || null,
-          port: asUrl.port || '7244'
-        };
-      } catch (error) {
-        return null;
-      }
-    };
-
-    const applyTarget = (rawTarget) => {
-      const parsed = normalizeTarget(rawTarget);
-      if (!parsed || !parsed.host) return false;
-      targetIp = parsed.host;
-      targetPort = parsed.port;
-      return true;
-    };
-
-    if (targetIp) {
-      applyTarget(targetIp);
-    }
-
-    if (!targetIp) {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        const queryTarget = (params.get('host') || params.get('ip') || params.get('target') || '').trim();
-        if (queryTarget) {
-          if (applyTarget(queryTarget)) {
-            console.log('[AutoViewer] クエリの接続先を使用:', `${targetIp}:${targetPort}`);
-          }
-        }
-      } catch (error) {
-        console.warn('[AutoViewer] クエリ解析に失敗:', error);
-      }
-    }
-
-    if (!targetIp) {
-      const hostSelect = document.getElementById('hostSelect');
-      if (hostSelect) {
-        targetIp = hostSelect.value;
-        applyTarget(targetIp);
-      }
-    }
-      // ★ 追加：リモートアクセス時は、アクセス先ホストに自動接続（IP入力不要）
-  if (!targetIp) {
-    const host = location.hostname;
-    const isLocal = (host === 'localhost' || host === '127.0.0.1');
-    if (!isLocal) {
-      targetIp = host;
-      console.log('[AutoViewer] 接続先を自動設定:', targetIp);
-    }
-  }
-
-
-
-    if (!targetIp) {
-      // ★ alertWithFocus を使用
-      if (window.alertWithFocus) {
-        window.alertWithFocus('配信者を選択するか、IPを入力してください');
-      } else {
-        alert('配信者を選択するか、IPを入力してください');
-      }
-      return;
-    }
-
-    wsUrl = `ws://${targetIp}:${targetPort}`;
-  }
+  } catch (error) { alert(error.message); return; }
 
   console.log('接続先:', wsUrl);
 
-  state.ws = new WebSocket(wsUrl);
+  resetQueueAutoplay();
+  const socket = new WebSocket(wsUrl);
+  state.ws = socket;
+  window.otsumamiRemoteProfile = null;
+  window.otsumamiRemoteStampConfig = null;
  // ★ 追加：スタンプ用に ws をグローバルへ
   window.otsumamiWs = state.ws;
 
-  state.ws.onopen = () => {
+  socket.onopen = () => {
+    if (state.ws !== socket) return;
     state.ws.send(JSON.stringify({
       type: 'join',
       roomId: state.FIXED_ROOM_ID,
@@ -170,24 +99,17 @@ export function connectWs(customIp = null) {
     logStatus(`接続完了: ${state.role}`);
   };
 
-  state.ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+  socket.onmessage = (event) => {
+    if (state.ws !== socket) return;
+    let data;
+    try { data = JSON.parse(event.data); } catch { return; }
+    if (data.type === 'profile-config-sync' || data.type === 'profile-config-updated') {
+      window.otsumamiRemoteProfile = data.config;
+    }
+    if (data.type === 'stamp-config') window.otsumamiRemoteStampConfig = data.config;
     window.dispatchEvent(new CustomEvent('websocket-message', { detail: data }));
 
-    const resolveStampAssetUrl = (assetUrl) => {
-      if (!assetUrl || typeof assetUrl !== 'string') return assetUrl;
-      if (/^https?:\/\//i.test(assetUrl)) return assetUrl;
-
-      try {
-        const wsEndpoint = state.ws?.url ? new URL(state.ws.url) : null;
-        if (!wsEndpoint) return assetUrl;
-        const protocol = wsEndpoint.protocol === 'wss:' ? 'https:' : 'http:';
-        const origin = `${protocol}//${wsEndpoint.host}`;
-        return new URL(assetUrl, origin).toString();
-      } catch (error) {
-        return assetUrl;
-      }
-    };
+    const resolveStampAssetUrl = (url) => resolveAsset(url, socket);
 
     if (data.type === 'joined') {
       logStatus(`部屋 ${data.roomId} に ${data.role} として参加`);
@@ -207,6 +129,7 @@ export function connectWs(customIp = null) {
     }
 
     if (data.type === 'error') {
+      resetQueueAutoplay();
       // ★ alertWithFocus を使用
       if (window.alertWithFocus) {
         window.alertWithFocus(data.message || 'エラーが発生しました');
@@ -232,12 +155,7 @@ export function connectWs(customIp = null) {
     if (data.type === 'stamp-list') {
       if (data.categories && window.otsumamiStamp) {
         window.otsumamiStamp.updateCategories(data.categories);
-        if (typeof window.otsumamiStamp.renderCategorySelectOptions === 'function') {
-          window.otsumamiStamp.renderCategorySelectOptions();
-        }
-        if (typeof window.otsumamiStamp.renderCategoryListForHost === 'function') {
-          window.otsumamiStamp.renderCategoryListForHost();
-        }
+
       }
       if (
         window.otsumamiStamp &&
@@ -249,7 +167,7 @@ export function connectWs(customIp = null) {
             ...stamp,
             url: resolveStampAssetUrl(stamp.url),
             thumbUrl: resolveStampAssetUrl(stamp.thumbUrl),
-            staticThumbUrl: resolveStampAssetUrl(stamp.staticThumbUrl || stamp.thumbUrl)
+            staticThumbUrl: resolveStampAssetUrl(stamp.staticThumbUrl)
           };
         });
         window.otsumamiStamp.updateStampListFromServer(stamps);
@@ -305,7 +223,7 @@ export function connectWs(customIp = null) {
       ) {
         // 音量設定をオーバーレイに送信
         window.electronAPI.sendToOverlay('send-video-volume', {
-          volume: config.videoVolume || 50,
+          volume: config.videoVolume ?? 50,
           muted: config.muteVideo || false
         });
         
@@ -451,13 +369,7 @@ export function connectWs(customIp = null) {
           if (playerState === -1 || playerState === 0 || playerState === 5) {
             console.log('[Queue] プレイヤーが停止中、キューから自動再生');
             
-            setTimeout(() => {
-              if (state.ws && state.ws.readyState === WebSocket.OPEN) {
-                state.ws.send(JSON.stringify({
-                  type: 'play-next'
-                }));
-              }
-            }, 500);
+            scheduleQueueAutoplay(state);
           }
         } catch (e) {
           console.error('[Queue] プレイヤー状態取得エラー:', e);
@@ -489,11 +401,13 @@ export function connectWs(customIp = null) {
     }
   };
 
-  state.ws.onclose = () => {
+  socket.onclose = () => {
+    if (state.ws !== socket) return;
     logStatus('接続切断');
   };
 
-  state.ws.onerror = (err) => {
+  socket.onerror = (err) => {
+    if (state.ws !== socket) return;
     console.error(err);
     logStatus('接続エラー');
   };
@@ -502,48 +416,10 @@ export function connectWs(customIp = null) {
 
 // ===== ビューア側：同期適用 =====
 export async function applySync(payload, force) {
-  // ★ プレイヤーが未初期化なら初期化
-  if (!state.player) {
-    console.log('[WebSocket] プレイヤーが未初期化 → おつまみタブを開いて初期化');
-    
-    // ★ おつまみタブを開く（playerViewerのdivを作る）
-    const otsumamiTabButton = document.querySelector('[data-tab="otsumami"]');
-    if (otsumamiTabButton) {
-      otsumamiTabButton.click();
-      
-      // タブが読み込まれるまで待つ
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-    
-    // player.jsをインポート
-    const { initPlayerIfReady } = await import('./player.js');
-    initPlayerIfReady();
-    
-    // 初期化を待つ（最大5秒）
-    await new Promise((resolve) => {
-      let attempts = 0;
-      const checkPlayer = setInterval(() => {
-        if (state.player && typeof state.player.loadVideoById === 'function') {
-          clearInterval(checkPlayer);
-          console.log('[WebSocket] プレイヤー初期化完了');
-          resolve();
-        }
-        
-        attempts++;
-        if (attempts > 50) {  // 5秒でタイムアウト
-          clearInterval(checkPlayer);
-          console.error('[WebSocket] プレイヤー初期化タイムアウト');
-          resolve();
-        }
-      }, 100);
-    });
-  }
-  
-  // まだプレイヤーがない場合は処理をスキップ
-  if (!state.player || typeof state.player.loadVideoById !== 'function') {
-    console.warn('[WebSocket] プレイヤーが利用できません - 同期をスキップ');
-    return;
-  }
+  if (!payload) return;
+  state.lastSyncPayload = payload;
+  // 未初期化の間は最新の同期情報だけを保持する。タブ選択は変更しない。
+  if (!state.player || typeof state.player.loadVideoById !== 'function') return;
 
   if (payload.action === 'load') {
     state.player.loadVideoById(payload.videoId);

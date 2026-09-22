@@ -41,7 +41,8 @@ class WebSocketManager {
    * WebSocket接続処理
    */
   setupWebSocket() {
-    this.wss.on('connection', (ws) => {
+    this.wss.on('connection', (ws, request) => {
+      ws.hostOriginAllowed = !request.headers.origin || request.headers.origin === `http://${request.headers.host}`;
       const remoteAddress = ws?._socket?.remoteAddress || '';
       const normalizedIp = this.normalizeAddress(remoteAddress);
       if (this.profileConfig?.isIpBanned(normalizedIp)) {
@@ -73,7 +74,9 @@ class WebSocketManager {
       // 切断処理
       ws.on('close', () => {
         console.log('🔌 クライアントが切断しました');
+        const wasHost = this.clients.get(ws)?.role === 'host';
         this.clients.delete(ws);
+        if (wasHost) { this.queueEnabled = false; this.broadcast({ type: 'roomClosed' }); }
         this.rateLimits.delete(ws);
         this.stampDownloadRateLimit.delete(ws);
       });
@@ -95,10 +98,11 @@ class WebSocketManager {
    * @param {WebSocket} ws - 送信元のWebSocket
    * @param {Buffer} data - 受信データ
    */
-  handleMessage(ws, data) {
+  async handleMessage(ws, data) {
     try {
       const message = JSON.parse(data.toString());
       const clientInfo = this.clients.get(ws);
+      if (!['join', 'register'].includes(message.type) && !['host', 'viewer'].includes(clientInfo?.role)) return;
 
       console.log(`📨 受信: ${message.type}`);
 
@@ -134,109 +138,109 @@ class WebSocketManager {
       switch (message.type) {
         case 'join':
           // クライアント登録（互換性のため）
-          this.handleJoin(ws, message);
+          await this.handleJoin(ws, message);
           break;
 
         case 'register':
           // クライアント登録（新仕様）
-          this.handleRegister(ws, message);
+          await this.handleRegister(ws, message);
           break;
 
         case 'sync':
           // 動画同期
-          this.handleSync(ws, message);
+          await this.handleSync(ws, message);
           break;
 
         case 'stamp':
           // スタンプ送信
-          this.handleStamp(ws, message);
+          await this.handleStamp(ws, message);
           break;
 
         case 'stamp-add-local':
           // ローカルスタンプ追加
-          this.handleStampAddLocal(ws, message);
+          await this.handleStampAddLocal(ws, message);
           break;
 
         case 'stamp-add':
           // URLスタンプ追加
-          this.handleStampAdd(ws, message);
+          await this.handleStampAdd(ws, message);
           break;
 
         case 'stamp-reorder':
           // スタンプ並び替え
-          this.handleStampReorder(ws, message);
+          await this.handleStampReorder(ws, message);
           break;
 
         case 'stamp-category-add':
           // スタンプにカテゴリ付与
-          this.handleStampCategoryAdd(ws, message);
+          await this.handleStampCategoryAdd(ws, message);
           break;
 
         case 'stamp-category-remove':
           // スタンプからカテゴリ除去
-          this.handleStampCategoryRemove(ws, message);
+          await this.handleStampCategoryRemove(ws, message);
           break;
 
         case 'stamp-category-def-add':
           // カテゴリ定義追加
-          this.handleStampCategoryDefAdd(ws, message);
+          await this.handleStampCategoryDefAdd(ws, message);
           break;
 
         case 'stamp-category-delete':
           // カテゴリ削除
-          this.handleStampCategoryDelete(ws, message);
+          await this.handleStampCategoryDelete(ws, message);
           break;
 
         case 'stamp-delete':
           // スタンプ削除
-          this.handleStampDelete(ws, message);
+          await this.handleStampDelete(ws, message);
           break;
 
         case 'stamp-thumb-regenerate-all':
           // 全サムネイル再生成
-          this.handleStampThumbRegenerateAll(ws, message);
+          await this.handleStampThumbRegenerateAll(ws, message);
           break;
 
         case 'stamp-thumb-regenerate-selected':
           // 選択サムネイル再生成
-          this.handleStampThumbRegenerateSelected(ws, message);
+          await this.handleStampThumbRegenerateSelected(ws, message);
           break;
 
         case 'comment':
           // コメント送信
-          this.handleComment(ws, message);
+          await this.handleComment(ws, message);
           break;
         case 'ohinerimaki-bell':
-          this.handleOhinerimakiBell(ws, message);
+          await this.handleOhinerimakiBell(ws, message);
           break;
         case 'ohinerimaki-delete':
-          this.handleOhinerimakiDelete(ws, message);
+          await this.handleOhinerimakiDelete(ws, message);
           break;
         case 'vcast-reaction':
-          this.handleVcastReaction(ws, message);
+          await this.handleVcastReaction(ws, message);
           break;
                   case 'toggle-queue':
           // キュー受付ON/OFF
-          this.handleToggleQueue(ws, message);
+          await this.handleToggleQueue(ws, message);
           break;
 
         case 'request-video':
           // 動画リクエスト
-          this.handleVideoRequest(ws, message);
+          await this.handleVideoRequest(ws, message);
           break;
 
         case 'remove-queue-item':
           // キューから削除
-          this.handleRemoveQueueItem(ws, message);
+          await this.handleRemoveQueueItem(ws, message);
           break;
 
         case 'play-next':
           // 次の動画を再生
-          this.handlePlayNext(ws, message);
+          await this.handlePlayNext(ws, message);
           break;
         case 'profile-config-updated':
           // プロフィール設定更新
-          this.handleProfileConfigUpdated(ws, message);
+          await this.handleProfileConfigUpdated(ws, message);
           break;
         case 'request-profile-config':
           // プロフィール設定取得
@@ -292,13 +296,13 @@ class WebSocketManager {
 
   canAssignHost(ws) {
     const remoteAddress = ws?._socket?.remoteAddress;
-    if (!this.isTrustedClient(remoteAddress)) {
+    if (!this.isLocalhost(remoteAddress) || ws.hostOriginAllowed === false) {
       console.log(`❌ ホスト権限拒否: ${remoteAddress} からの接続`);
       return { allowed: false, reason: 'untrusted' };
     }
 
-    const existingHost = Array.from(this.clients.values()).find(
-      (info, client) => client !== ws && info.role === 'host'
+    const existingHost = Array.from(this.clients.entries()).find(
+      ([client, info]) => client !== ws && info.role === 'host'
     );
 
     if (existingHost) {
@@ -429,7 +433,12 @@ class WebSocketManager {
         this.sendTo(ws, {
           type: 'stamp-config',
           config: {
-            videoVolume: config.videoVolume || 50,
+            maxFileSize: config.maxFileSize,
+            maxStampCount: config.maxStampCount,
+            listenerAddPermission: config.listenerAddPermission,
+            passwordRequired: !!config.discordPassword,
+            categories: this.stampConfig.getCategories(),
+            videoVolume: config.videoVolume ?? 50,
             muteVideo: config.muteVideo || false,
             stampDuration: config.stampDuration || 3,
             stampBaseSize: config.stampBaseSize || 220,
@@ -479,7 +488,7 @@ class WebSocketManager {
   }
 
   setupOhinerimakiCleanup() {
-    setInterval(() => {
+    this.cleanupTimer = setInterval(() => {
       const now = Date.now();
       const THIRTY_MINUTES = 30 * 60 * 1000;
       for (const [ip, timestamp] of this.ohinerimakiRateLimit.entries()) {
@@ -523,7 +532,7 @@ class WebSocketManager {
     // 登録確認を返す
     this.sendTo(ws, {
       type: 'registered',
-      role: message.role
+      role: clientInfo?.role || null
     });
   }
 
@@ -598,6 +607,7 @@ class WebSocketManager {
    * クリーンアップ
    */
   close() {
+    clearInterval(this.cleanupTimer);
     this.clients.forEach((_, ws) => {
       ws.close();
     });
@@ -610,7 +620,7 @@ class WebSocketManager {
     try {
       this.sendTo(ws, {
         type: 'profile-config-sync',
-        config: this.profileConfig.getAll()
+        config: this.profileConfig.getPublic()
       });
     } catch (error) {
       console.error('❌ プロフィール設定送信失敗:', error);

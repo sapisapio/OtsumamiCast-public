@@ -19,6 +19,11 @@ export async function initOtsumamiTab() {
   
   // キュー機能の初期化
   await initQueueFeature();
+  const queueToggle = document.getElementById('queueToggle');
+  const queueForm = document.getElementById('queueForm');
+  if (queueToggle) queueToggle.checked = !!window.state?.queueEnabled;
+  if (queueForm) queueForm.style.display = window.state?.queueEnabled ? 'block' : 'none';
+  window.otsumamiQueue?.updateQueueDisplay(window.state?.videoQueue || []);
   
   // ロール変更時のコンテンツ表示制御
   updateOtsumamiContentVisibility();

@@ -147,7 +147,11 @@ async function startServer() {
     );
 
     // サーバー起動
-server.listen(CONFIG.SERVER.PORT, '0.0.0.0', () => {
+await new Promise((resolve, reject) => {
+server.once('error', reject);
+server.listen(CONFIG.SERVER.PORT, CONFIG.SERVER.HOST, () => {
+  server.removeListener('error', reject);
+  resolve();
   console.log('');
   console.log('='.repeat(50));
   console.log('🎉 OtsumamiCast サーバー起動');
@@ -163,67 +167,26 @@ server.listen(CONFIG.SERVER.PORT, '0.0.0.0', () => {
   console.log('='.repeat(50));
   console.log('');
 });
+});
   } catch (error) {
     console.error('❌ サーバー起動エラー:', error);
     console.error('スタック:', error.stack);
-    process.exit(1);
+    throw error;
   }
 }
 
-// ===== 終了処理 =====
-process.on('SIGINT', async () => {
-  console.log('\n⏹ サーバーを停止しています...');
-  
-  await upnpManager.cleanup();
-  wsManager.close();
-  await stampConfig.save();
-  await profileConfig.save();
-  await ohinerimakiConfig.saveConfig();
-  await vcastConfig.save();
-  await vcastState.saveState();
-  
-  process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-  console.log('\n⏹ サーバーを停止しています...');
-  
-  await upnpManager.cleanup();
-  wsManager.close();
-  await stampConfig.save();
-  await profileConfig.save();
-  await ohinerimakiConfig.saveConfig();
-  await vcastConfig.save();
-  await vcastState.saveState();
-  
-  process.exit(0);
-});
-
-// ===== エラーハンドリング =====
-process.on('uncaughtException', (error) => {
-  console.error('❌ 予期しないエラー:', error);
-  console.error('スタック:', error.stack);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ 未処理のPromise拒否:', reason);
-});
-
-// ===== サーバー起動ラッパー =====
-// ★ Electronから require されたとき、または直接実行されたときに自動起動
-// ★ ただし二重起動は防ぐ
-let isStarting = false;
-
-function startServerWrapper() {
-  if (isStarting) {
-    console.log('[SERVER] 既に起動処理中です');
-    return;
-  }
-  isStarting = true;
-  startServer();
+let shutdownPromise;
+function shutdown() {
+  if (shutdownPromise) return shutdownPromise;
+  shutdownPromise = (async () => {
+    wsManager.close();
+    server.close();
+    await upnpManager.cleanup();
+    await Promise.all([stampConfig.save(), profileConfig.save(), ohinerimakiConfig.saveConfig(), vcastConfig.save(), vcastState.saveState()]);
+  })();
+  return shutdownPromise;
 }
-
-// ★ require されたときに自動起動
-// ★ require.main === module のときは直接実行（npm run dev:server）
-// ★ それ以外は Electron から require されたとき
-startServerWrapper();
+for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => shutdown().finally(() => process.exit(0)));
+const ready = startServer();
+if (require.main === module) ready.catch(error => { console.error(error); process.exit(1); });
+module.exports = { ready, shutdown };

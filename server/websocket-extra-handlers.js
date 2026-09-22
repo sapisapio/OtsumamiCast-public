@@ -37,54 +37,6 @@ function sanitizeText(value, maxLength) {
     .slice(0, maxLength);
 }
 
-function isUnsafeKey(key) {
-  return key === '__proto__' || key === 'prototype' || key === 'constructor';
-}
-
-function sanitizeProfileConfig(config) {
-  if (!config || typeof config !== 'object') return null;
-  const sourceProfile = config.profile && typeof config.profile === 'object'
-    ? config.profile
-    : config;
-  const allowedKeys = ['name', 'bio', 'photo', 'links'];
-  const sanitizedProfile = {};
-
-  allowedKeys.forEach((key) => {
-    if (isUnsafeKey(key)) return;
-    const value = sourceProfile[key];
-    if (value === undefined || value === null) return;
-
-    if (key === 'links') {
-      if (!Array.isArray(value)) return;
-      const sanitizedLinks = value
-        .filter((item) => item && typeof item === 'object' && !Array.isArray(item))
-        .map((item) => {
-          const sanitizedItem = {};
-          ['label', 'url', 'icon'].forEach((linkKey) => {
-            if (isUnsafeKey(linkKey)) return;
-            const linkValue = item[linkKey];
-            if (typeof linkValue === 'string') {
-              sanitizedItem[linkKey] = linkValue;
-            }
-          });
-          return sanitizedItem;
-        })
-        .filter((item) => Object.keys(item).length > 0);
-
-      if (sanitizedLinks.length > 0) {
-        sanitizedProfile.links = sanitizedLinks;
-      }
-      return;
-    }
-
-    if (typeof value === 'string') {
-      sanitizedProfile[key] = value;
-    }
-  });
-
-  return { profile: sanitizedProfile };
-}
-
 function applyExtraHandlers(manager) {
   manager.getClientIp = getClientIp;
   manager.validateOhinerimakiName = validateOhinerimakiName;
@@ -105,7 +57,7 @@ function applyExtraHandlers(manager) {
     const clientInfo = this.clients.get(ws);
     if (!clientInfo || !this.ohinerimakiConfig) return;
 
-    const isTest = message.isTest === true;
+    const isTest = message.isTest === true && clientInfo.role === 'host';
     if (clientInfo.role !== 'viewer' && !isTest) {
       this.sendTo(ws, { type: 'error', message: 'リスナーのみ送信できます' });
       return;
@@ -177,7 +129,7 @@ function applyExtraHandlers(manager) {
 
   manager.handleVcastReaction = async function handleVcastReaction(ws, message) {
     const clientInfo = this.clients.get(ws);
-    if (!clientInfo || !this.vcastState) return;
+    if (clientInfo?.role !== 'viewer' || !this.vcastState) return;
 
     const action = message.action;
     const allowedActions = ['stroke', 'massage', 'rub', 'lick'];
@@ -235,7 +187,7 @@ function applyExtraHandlers(manager) {
       return;
     }
 
-    const sanitizedConfig = sanitizeProfileConfig(message.config);
+    const sanitizedConfig = this.profileConfig?.getPublic();
     if (!sanitizedConfig) {
       this.sendTo(ws, {
         type: 'error',

@@ -1,3 +1,4 @@
+import { connectionUrl } from '../connection-target.js';
 // ===== その他ボタン機能 =====
 
 import { state, logStatus } from '../main.js';
@@ -12,6 +13,7 @@ export function initButtons() {
   initUpnpButton();
   initPortCheckButton();
   initVideoWindowButton();
+  initServerPortSettings();
   
   console.log('[Buttons] Initialized');
 }
@@ -39,11 +41,7 @@ function initOpenBrowserButtons() {
     const input = rawTarget.trim();
     if (!input) return null;
     try {
-      const parsed = /^https?:\/\//i.test(input) ? new URL(input) : new URL(`http://${input}`);
-      const host = parsed.hostname;
-      const port = parsed.port || '7244';
-      if (!host) return null;
-      return `http://${host}:${port}`;
+      return toHttpFromWs(connectionUrl(input));
     } catch (error) {
       return null;
     }
@@ -165,4 +163,24 @@ function initVideoWindowButton() {
     
     window.electronAPI.openVideoWindow(currentVideoData);
   });
+}
+
+async function initServerPortSettings() {
+  if (!window.electronAPI?.getServerPort) return;
+  const section = document.getElementById('serverPortSettings');
+  const input = document.getElementById('serverPort');
+  const status = document.getElementById('serverPortStatus');
+  try {
+    const { current, saved } = await window.electronAPI.getServerPort();
+    section.hidden = false;
+    input.value = saved;
+    status.textContent = '使用中: ' + current;
+    document.getElementById('saveServerPort').addEventListener('click', async () => {
+      if (!input.reportValidity() || !input.value) return;
+      try {
+        await window.electronAPI.saveServerPort(input.value);
+        status.textContent = '保存しました。アプリを再起動すると ' + input.value + ' 番で起動します。';
+      } catch (error) { status.textContent = error.message; }
+    });
+  } catch (error) { console.error(error); }
 }

@@ -50,6 +50,7 @@ export async function initProfileTab() {
   // イベントリスナーを設定
   setupEventListeners();
   
+  registerWebSocketHandlers();
   // プロフィール設定を読み込み
   await loadProfileConfig();
 
@@ -58,8 +59,7 @@ export async function initProfileTab() {
 
   await loadBanList();
   
-  // WebSocketメッセージハンドラを登録
-  registerWebSocketHandlers();
+
 
   window.addEventListener('hostingStateChanged', async (event) => {
     const hosting = event?.detail?.hosting;
@@ -164,6 +164,10 @@ async function loadProfileConfig() {
       return;
     }
 
+    if (window.otsumamiRemoteProfile) {
+      applyProfileConfig(resolveRemoteProfileConfig(window.otsumamiRemoteProfile));
+      return;
+    }
     // リスナーは接続先ホストへ同期要求（ローカルAPIは参照しない）
     window.otsumamiWs.send(JSON.stringify({ type: 'request-profile-config' }));
     return;
@@ -323,7 +327,7 @@ async function updateInviteLink() {
   const role = window.state?.role || window.otsumamiRole || 'viewer';
   if (role !== 'host') return;
 
-  const port = location.port || CONFIG.WS_PORT || '7244';
+  const port = location.port || (location.protocol === 'https:' ? '443' : '80');
   let host = location.hostname;
 
   try {
@@ -977,7 +981,7 @@ function registerWebSocketHandlers() {
 
       // 少し待ってからプロフィールを読み込む
       setTimeout(() => {
-        loadProfileConfig();
+        if (!window.otsumamiRemoteProfile) loadProfileConfig();
       }, 500);
     }
 
@@ -988,11 +992,6 @@ function registerWebSocketHandlers() {
         const role = window.state?.role || window.otsumamiRole || 'viewer';
         const config = role === 'viewer' ? resolveRemoteProfileConfig(data.config) : data.config;
         applyProfileConfig(config);
-        
-        // タブ状態を更新
-        if (data.config.features) {
-          updateTabStates(data.config.features);
-        }
       }
     }
 
@@ -1004,82 +1003,13 @@ function registerWebSocketHandlers() {
         const config = role === 'viewer' ? resolveRemoteProfileConfig(data.config) : data.config;
         applyProfileConfig(config);
         updateRoleUI();
-        if (config.features) {
-          updateTabStates(config.features);
-        }
       }
     }
   };
 
-  // グローバルなメッセージハンドラ関数を定義
-  window.profileTabMessageHandler = function(event) {
-    try {
-      const data = JSON.parse(event.data);
-      handleProfileWsData(data);
-    } catch (e) {
-      // JSON parse エラーは無視
-    }
-  };
-
-  window.profileTabEventMessageHandler = function(event) {
-    handleProfileWsData(event?.detail);
-  };
-  window.removeEventListener('websocket-message', window.profileTabEventMessageHandler);
-  window.addEventListener('websocket-message', window.profileTabEventMessageHandler);
-  
-  // WebSocketが接続されたらイベントリスナーを追加
-  const setupWebSocketListener = () => {
-    if (window.otsumamiWs && window.otsumamiWs.readyState === WebSocket.OPEN) {
-      // 既存のリスナーを削除（重複防止）
-      window.otsumamiWs.removeEventListener('message', window.profileTabMessageHandler);
-      // 新しいリスナーを追加
-      window.otsumamiWs.addEventListener('message', window.profileTabMessageHandler);
-      console.log('[ProfileTab] WebSocketリスナーを追加しました');
-      return true;
-    }
-    return false;
-  };
-  
-  // 既に接続済みの場合は即座に設定
-  if (setupWebSocketListener()) {
-    window.removeEventListener('websocket-message', window.profileTabEventMessageHandler);
-    window.addEventListener('websocket-message', window.profileTabEventMessageHandler);
-    // ★ 接続済みの場合は即座にプロフィールを読み込む
-    const role = window.state?.role || window.otsumamiRole || 'viewer';
-    if (role === 'viewer') {
-      // UI状態を更新
-      updateRoleUI();
-      
-      setTimeout(() => {
-        loadProfileConfig();
-      }, 500);
-    }
-    return;
+  window.profileTabMessageHandler = handleProfileWsData;
+  window.addEventListener('websocket-message', event => handleProfileWsData(event.detail));
+  if (window.otsumamiRemoteProfile && window.otsumamiRole === 'viewer') {
+    handleProfileWsData({ type: 'profile-config-sync', config: window.otsumamiRemoteProfile });
   }
-  
-  // まだ接続されていない場合は、接続を待つ（タイムアウトあり）
-  const maxWaitMs = 60000;
-  const startAt = Date.now();
-  const checkInterval = setInterval(() => {
-    if (setupWebSocketListener()) {
-      clearInterval(checkInterval);
-      window.removeEventListener('websocket-message', window.profileTabEventMessageHandler);
-      window.addEventListener('websocket-message', window.profileTabEventMessageHandler);
-      
-      // ★ 接続成功時にリスナーならプロフィールを読み込む
-      const role = window.state?.role || window.otsumamiRole || 'viewer';
-      if (role === 'viewer') {
-        updateRoleUI();
-        setTimeout(() => {
-          loadProfileConfig();
-        }, 500);
-      }
-      return;
-    }
-
-    if (Date.now() - startAt > maxWaitMs) {
-      clearInterval(checkInterval);
-      console.warn('[ProfileTab] WebSocket接続待ちがタイムアウトしました');
-    }
-  }, 500);
 }

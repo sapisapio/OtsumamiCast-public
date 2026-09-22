@@ -39,3 +39,6 @@ public/stamps/*
 !public/stamps/thumbs/
 public/stamps/thumbs/*
 !public/stamps/thumbs/.gitkeep
+# Generated application settings
+public/*-config.json
+stamp-list.json

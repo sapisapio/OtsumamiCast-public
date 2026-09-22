@@ -19,7 +19,7 @@ const CONFIG = {
   // ===== サーバー設定 =====
   SERVER: {
     // ポート番号
-    PORT: parseInt(process.env.PORT || '7244', 10),
+    PORT: require('./app-settings').getPort(),
     
     // バインドするホスト
     HOST: process.env.HOST || '0.0.0.0',
@@ -128,10 +128,10 @@ const CONFIG = {
   // ===== UPnP設定 =====
   UPNP: {
     // 公開ポート
-    PUBLIC_PORT: 7244,
+    PUBLIC_PORT: require('./app-settings').getPort(),
     
     // プライベートポート
-    PRIVATE_PORT: 7244,
+    PRIVATE_PORT: require('./app-settings').getPort(),
     
     // TTL（0 = 永続）
     TTL: 0,
