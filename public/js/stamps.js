@@ -210,6 +210,14 @@ function updateRecentStamps(url) {
   renderRecentStamps();
 }
 
+function applyStampUsage(url, lastUsedAt = Date.now()) {
+  if (!url) return;
+
+  const stamp = stampMetaList.find((item) => item?.url === url);
+  if (stamp) stamp.lastUsedAt = lastUsedAt;
+  updateRecentStamps(url);
+}
+
 function isVideoUrl(url) {
   const lower = (url || '').toLowerCase().split('?')[0];
   return lower.endsWith('.webm') || lower.endsWith('.mp4');
@@ -732,6 +740,15 @@ function sendStampToOverlayOrHost(url) {
 
     // ★ ホストが押しても一覧の順番は変えない。最近欄だけ更新。
     updateRecentStamps(url);
+
+    // オーバーレイへは再送せず、サーバーに使用履歴だけ保存する。
+    const ws = window.otsumamiWs;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'stamp-usage',
+        payload: { filename: sendUrl }
+      }));
+    }
     return;
   }
 
@@ -799,6 +816,7 @@ document.addEventListener('click', (e) => {
 window.otsumamiStamp = window.otsumamiStamp || {};
 window.otsumamiStamp.renderStampList = renderStampList;
 window.otsumamiStamp.renderRecentStamps = renderRecentStamps;
+window.otsumamiStamp.applyStampUsage = applyStampUsage;
 window.otsumamiStamp.initStampDom = initStampDom;
 window.otsumamiStamp.applyStaticThumbnailPreviewSetting = applyStaticThumbnailPreviewSetting;
 window.otsumamiStamp.isStaticThumbnailPreviewEnabled = isStaticThumbnailPreviewEnabled;

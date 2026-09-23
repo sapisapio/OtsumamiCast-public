@@ -175,6 +175,21 @@ export function connectWs(customIp = null) {
           return;
     }
 
+    // 全スタンプリストを取り直さず、最近使った欄だけ同期する。
+    if (data.type === 'stamp-used') {
+      if (
+        data.url &&
+        window.otsumamiStamp &&
+        typeof window.otsumamiStamp.applyStampUsage === 'function'
+      ) {
+        window.otsumamiStamp.applyStampUsage(
+          resolveStampAssetUrl(data.url),
+          data.lastUsedAt
+        );
+      }
+      return;
+    }
+
     if (data.type === 'stamp-thumb-regenerate-result') {
       const total = Number(data.total || 0);
       const successCount = Number(data.successCount || 0);

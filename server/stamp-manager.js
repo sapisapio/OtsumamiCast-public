@@ -143,7 +143,10 @@ class StampManager {
     if (stamp) {
       stamp.lastUsedAt = Date.now();
       await this.save();
+      return stamp;
     }
+
+    return null;
   }
 
   /**

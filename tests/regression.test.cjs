@@ -68,13 +68,21 @@ test('absolute stamp URLs reorder/delete correctly; IP and source URL never leav
   await manager.reorderStamps(['http://host:8123/stamps/b.png','http://host:8123/stamps/a.png']);assert.equal(manager.getStamps()[0].id,'b');
   await manager.deleteStamps(['http://host:8123/stamps/a.png']);assert.equal(manager.getStamps().length,1);
 });
-test('category changes reject unregistered clients and unknown category; stamps do not resend list',async()=>{
-  let updates=0,broadcasts=[];const socket={};const manager={clients:new Map(),sendTo(){},checkRateLimit:()=>true,stampConfig:{getCategories:()=>[{id:'joy'}]},stampManager:{addCategoryToStamps:async()=>updates++,updateStampUsage:async()=>{}},broadcast:m=>broadcasts.push(m)};
+test('category changes reject unregistered clients and unknown category; stamp usage sends history only',async()=>{
+  let updates=0,broadcasts=[];const socket={};const manager={clients:new Map(),sendTo(){},checkRateLimit:()=>true,stampConfig:{getCategories:()=>[{id:'joy'}]},stampManager:{addCategoryToStamps:async()=>updates++,updateStampUsage:async filename=>({url:filename,lastUsedAt:123})},broadcast:m=>broadcasts.push(m)};
   require('../server/websocket-stamp-handlers')(manager);
   await manager.handleStampCategoryAdd(socket,{urls:['/stamps/a.png'],category:'joy'});assert.equal(updates,0);
   manager.clients.set(socket,{role:'viewer'});await manager.handleStampCategoryAdd(socket,{urls:['/stamps/a.png'],category:'fake'});assert.equal(updates,0);
   manager.broadcastStampList=async()=>{};await manager.handleStampCategoryAdd(socket,{urls:['/stamps/a.png'],category:'joy'});assert.equal(updates,1);
-  await manager.handleStamp(socket,{payload:{filename:'/stamps/a.png'}});assert.deepEqual(broadcasts.map(x=>x.type),['stamp']);
+  await manager.handleStamp(socket,{payload:{filename:'/stamps/a.png'}});assert.deepEqual(broadcasts.map(x=>x.type),['stamp-used','stamp']);
+  assert.equal(broadcasts[0].url,'/stamps/a.png');
+});
+test('listener stamp additions are limited per IP while host additions are exempt',async()=>{
+  let additions=0;const errors=[];const viewer={_socket:{remoteAddress:'::ffff:203.0.113.1'}};const manager={clients:new Map([[viewer,{role:'viewer'}]]),stampDownloadRateLimit:new Map(),normalizeAddress:value=>value.replace(/^::ffff:/,''),sendTo(_ws,message){if(message.type==='error')errors.push(message.message);},broadcast(){},stampHandler:{addStampFromDiscord:async(_url,id)=>({id,url:`/stamps/${id}.png`,filename:`${id}.png`,fileSizeBytes:1})},stampManager:{addStamp:async()=>additions++,getStamps:()=>[]},stampConfig:{config:{maxFileSize:5},canListenerAddStamp:()=>true,isFileSizeValid:()=>true,getCategories:()=>[]}};
+  require('../server/websocket-stamp-handlers')(manager);manager.broadcastStampList=async()=>{};const message={url:'https://cdn.discordapp.com/a.png'};
+  for(let i=0;i<6;i++)await manager.handleStampAdd(viewer,message);assert.equal(additions,5);assert.match(errors.at(-1),/5分間に5件/);
+  const reconnected={_socket:{remoteAddress:'203.0.113.1'}};manager.clients.set(reconnected,{role:'viewer'});await manager.handleStampAdd(reconnected,message);assert.equal(additions,5);
+  const host={_socket:{remoteAddress:'127.0.0.1'}};manager.clients.set(host,{role:'host'});for(let i=0;i<6;i++)await manager.handleStampAdd(host,message);assert.equal(additions,11);
 });
 test('profile broadcasts include extended fields and empty arrays but no bans',()=>{
   const Profile=require('../server/profile-config');const profile=new Profile('unused');profile.config.profile.nickname='test';profile.config.profile.links=[];profile.config.bannedIps=['private'];

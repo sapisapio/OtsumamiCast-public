@@ -3,20 +3,29 @@ const path = require('path');
 
 function applyStampHandlers(manager) {
   const DOWNLOAD_LIMIT = {
-    max: 100,
+    max: 5,
     windowMs: 5 * 60 * 1000
   };
 
   function checkDownloadRateLimit(ws) {
     const now = Date.now();
-    const history = manager.stampDownloadRateLimit.get(ws) || [];
+    const ip = manager.normalizeAddress(ws?._socket?.remoteAddress) || 'unknown';
+
+    // 接続し直して制限を回避できないようIP単位で記録する。
+    for (const [storedIp, timestamps] of manager.stampDownloadRateLimit.entries()) {
+      const active = timestamps.filter((timestamp) => now - timestamp < DOWNLOAD_LIMIT.windowMs);
+      if (active.length) manager.stampDownloadRateLimit.set(storedIp, active);
+      else manager.stampDownloadRateLimit.delete(storedIp);
+    }
+
+    const history = manager.stampDownloadRateLimit.get(ip) || [];
     const recent = history.filter((timestamp) => now - timestamp < DOWNLOAD_LIMIT.windowMs);
     if (recent.length >= DOWNLOAD_LIMIT.max) {
-      manager.stampDownloadRateLimit.set(ws, recent);
+      manager.stampDownloadRateLimit.set(ip, recent);
       return false;
     }
     recent.push(now);
-    manager.stampDownloadRateLimit.set(ws, recent);
+    manager.stampDownloadRateLimit.set(ip, recent);
     return true;
   }
 
@@ -47,14 +56,41 @@ function applyStampHandlers(manager) {
   }
 
   manager.handleStamp = async function handleStamp(ws, message) {
+    let usedStamp = null;
     if (this.stampManager && message.payload && message.payload.filename) {
-      await this.stampManager.updateStampUsage(message.payload.filename);
+      usedStamp = await this.stampManager.updateStampUsage(message.payload.filename);
+    }
+
+    if (usedStamp) {
+      this.broadcast({
+        type: 'stamp-used',
+        url: usedStamp.url,
+        lastUsedAt: usedStamp.lastUsedAt
+      });
     }
 
     this.broadcast({
       type: 'stamp',
       payload: message.payload || {},
       timestamp: Date.now()
+    });
+  };
+
+  // ホストはスタンプをローカル表示するため、履歴だけサーバーへ記録する。
+  manager.handleStampUsage = async function handleStampUsage(ws, message) {
+    const clientInfo = this.clients.get(ws);
+    if (clientInfo?.role !== 'host' || !this.stampManager) return;
+
+    const filename = message?.payload?.filename;
+    if (!filename) return;
+
+    const usedStamp = await this.stampManager.updateStampUsage(filename);
+    if (!usedStamp) return;
+
+    this.broadcast({
+      type: 'stamp-used',
+      url: usedStamp.url,
+      lastUsedAt: usedStamp.lastUsedAt
     });
   };
 
@@ -164,10 +200,11 @@ function applyStampHandlers(manager) {
       return;
     }
 
-    if (!checkDownloadRateLimit(ws)) {
+    // ホストの一括整理を妨げず、外部リスナーの追加だけを制限する。
+    if (!isHost && !checkDownloadRateLimit(ws)) {
       this.sendTo(ws, {
         type: 'error',
-        message: 'スタンプ追加が多すぎます。時間をおいて試してください'
+        message: 'スタンプ追加は5分間に5件までです。時間をおいて試してください'
       });
       return;
     }

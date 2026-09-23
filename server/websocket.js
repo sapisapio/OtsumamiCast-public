@@ -29,7 +29,7 @@ class WebSocketManager {
     this.currentQueueId = 0;        // キューID採番用
     this.ohinerimakiRateLimit = new Map(); // IP -> timestamp
     this.rateLimits = new Map(); // ws -> { type: [timestamps] }
-    this.stampDownloadRateLimit = new Map(); // ws -> [timestamps]
+    this.stampDownloadRateLimit = new Map(); // IP -> [timestamps]
     applyStampHandlers(this);
     applyQueueHandlers(this);
     applyExtraHandlers(this);
@@ -78,7 +78,6 @@ class WebSocketManager {
         this.clients.delete(ws);
         if (wasHost) { this.queueEnabled = false; this.broadcast({ type: 'roomClosed' }); }
         this.rateLimits.delete(ws);
-        this.stampDownloadRateLimit.delete(ws);
       });
 
       // エラー処理
@@ -86,7 +85,6 @@ class WebSocketManager {
         console.error('❌ WebSocketエラー:', error);
         this.clients.delete(ws);
         this.rateLimits.delete(ws);
-        this.stampDownloadRateLimit.delete(ws);
       });
     });
 
@@ -154,6 +152,11 @@ class WebSocketManager {
         case 'stamp':
           // スタンプ送信
           await this.handleStamp(ws, message);
+          break;
+
+        case 'stamp-usage':
+          // ホストがローカル表示したスタンプの使用履歴
+          await this.handleStampUsage(ws, message);
           break;
 
         case 'stamp-add-local':
