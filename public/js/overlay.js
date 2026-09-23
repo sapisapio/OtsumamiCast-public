@@ -41,6 +41,7 @@ let vcastState = null;
 let vcastMicStream = null;
 let vcastMicAnalyzer = null;
 let vcastMicAnimationId = null;
+let vcastMicRequestId = 0;
 let vcastMicRippleAt = 0;
 let vcastMicDeviceId = null;
 
@@ -291,7 +292,7 @@ function updateVcastConfig(config) {
     ((config.idleIntensity ?? 100) / 100) * 5
   );
 
-  if (config.voiceReaction) {
+  if (config.enabled && config.voiceReaction) {
     if (vcastMicDeviceId !== config.micDeviceId) {
       stopVcastMic();
     }
@@ -363,11 +364,26 @@ function reactionIcon(action) {
 
 async function startVcastMic() {
   if (vcastMicStream || !navigator.mediaDevices?.getUserMedia) return;
+  const requestId = ++vcastMicRequestId;
   try {
     const deviceId = vcastConfig?.micDeviceId;
-    vcastMicStream = await navigator.mediaDevices.getUserMedia({
-      audio: deviceId ? { deviceId: { exact: deviceId } } : true
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+        autoGainControl: false,
+        echoCancellation: false,
+        noiseSuppression: false
+      }
     });
+    if (
+      requestId !== vcastMicRequestId ||
+      !vcastConfig?.enabled ||
+      !vcastConfig?.voiceReaction
+    ) {
+      stream.getTracks().forEach(track => track.stop());
+      return;
+    }
+    vcastMicStream = stream;
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const source = audioContext.createMediaStreamSource(vcastMicStream);
     const analyzer = audioContext.createAnalyser();
@@ -381,6 +397,7 @@ async function startVcastMic() {
 }
 
 function stopVcastMic() {
+  vcastMicRequestId += 1;
   if (vcastMicStream) {
     vcastMicStream.getTracks().forEach(track => track.stop());
   }

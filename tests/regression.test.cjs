@@ -61,6 +61,18 @@ test('connection URLs preserve port and protocol; assets use the connected host'
   assert.throws(()=>connectionUrl('file:///x','http://localhost:7244'));
   assert.equal(resolveAsset('/stamps/thumbs/a.png',{url:'ws://192.0.2.5:8123/'}),'http://192.0.2.5:8123/stamps/thumbs/a.png');
 });
+test('Vcast microphone capture disables processing and releases temporary streams',()=>{
+  const main=fs.readFileSync(path.join(root,'electron-main.js'),'utf8');
+  const overlay=fs.readFileSync(path.join(root,'public/js/overlay.js'),'utf8');
+  const tab=fs.readFileSync(path.join(root,'public/js/tabs/vcast-tab-init.js'),'utf8');
+  assert.match(main,/WebRtcAllowInputVolumeAdjustment/);
+  for(const source of [overlay,tab]){
+    assert.match(source,/autoGainControl:\s*false/);assert.match(source,/echoCancellation:\s*false/);assert.match(source,/noiseSuppression:\s*false/);
+  }
+  assert.match(tab,/permissionStream\?\.getTracks\(\)\.forEach\(\(track\) => track\.stop\(\)\)/);
+  assert.match(tab,/otsumamiTabChanged/);
+  assert.match(overlay,/config\.enabled && config\.voiceReaction/);
+});
 test('absolute stamp URLs reorder/delete correctly; IP and source URL never leave manager', async()=>{
   const Manager=require('../server/stamp-manager');const manager=new Manager('unused');manager.save=async()=>{};
   manager.stampList={stamps:[{id:'a',url:'/stamps/a.png',addedIp:'192.0.2.1',sourceUrl:'private'},{id:'b',url:'/stamps/b.png'}]};

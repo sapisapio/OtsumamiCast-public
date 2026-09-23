@@ -11,6 +11,15 @@ const vcastTierClasses = [
   'vcast-level-tier-6'
 ];
 
+function microphoneConstraints(deviceId) {
+  return {
+    ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+    autoGainControl: false,
+    echoCancellation: false,
+    noiseSuppression: false
+  };
+}
+
 /**
  * Vcastタブの初期化
  */
@@ -33,6 +42,8 @@ export async function initVcastTab() {
   // ホスト専用UI表示制御
   updateHostOnlyUI();
   window.addEventListener('otsumamiRoleChanged', updateHostOnlyUI);
+  window.addEventListener('otsumamiTabChanged', handleVcastTabChanged);
+  window.addEventListener('pagehide', stopMicPreview);
   
   console.log('[VcastTab] 初期化完了');
 }
@@ -522,10 +533,15 @@ function formatAction(action) {
 
 async function loadMicDevices() {
   if (!navigator.mediaDevices?.enumerateDevices) return;
+  let permissionStream = null;
   try {
-    await navigator.mediaDevices.getUserMedia({ audio: true });
+    permissionStream = await navigator.mediaDevices.getUserMedia({
+      audio: microphoneConstraints()
+    });
   } catch (error) {
     console.warn('[VcastTab] マイク権限取得失敗:', error);
+  } finally {
+    permissionStream?.getTracks().forEach((track) => track.stop());
   }
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
@@ -542,7 +558,7 @@ async function loadMicDevices() {
     if (micSelect.dataset.preferred) {
       micSelect.value = micSelect.dataset.preferred;
     }
-    startMicPreview();
+    if (isVcastTabActive()) startMicPreview();
   } catch (error) {
     console.warn('[VcastTab] マイク一覧取得失敗:', error);
   }
@@ -551,15 +567,30 @@ async function loadMicDevices() {
 let micPreviewStream = null;
 let micPreviewAnalyzer = null;
 let micPreviewRaf = null;
+let micPreviewRequestId = 0;
+
+function isVcastTabActive() {
+  return document.querySelector('.tab.active')?.dataset.tab === 'vcast';
+}
+
+function handleVcastTabChanged(event) {
+  if (event.detail?.tabName === 'vcast') startMicPreview();
+  else stopMicPreview();
+}
 
 async function startMicPreview() {
   const micSelect = document.getElementById('vcastMicDevice');
-  if (!micSelect || !navigator.mediaDevices?.getUserMedia) return;
+  if (!isVcastTabActive() || !micSelect || !navigator.mediaDevices?.getUserMedia) return;
   stopMicPreview();
+  const requestId = ++micPreviewRequestId;
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { deviceId: micSelect.value ? { exact: micSelect.value } : undefined }
+      audio: microphoneConstraints(micSelect.value || undefined)
     });
+    if (requestId !== micPreviewRequestId || !isVcastTabActive()) {
+      stream.getTracks().forEach((track) => track.stop());
+      return;
+    }
     micPreviewStream = stream;
     const context = new (window.AudioContext || window.webkitAudioContext)();
     const source = context.createMediaStreamSource(stream);
@@ -574,6 +605,7 @@ async function startMicPreview() {
 }
 
 function stopMicPreview() {
+  micPreviewRequestId += 1;
   if (micPreviewStream) {
     micPreviewStream.getTracks().forEach((track) => track.stop());
   }
@@ -605,7 +637,7 @@ loadMicDevices().then(() => {
   const micSelect = document.getElementById('vcastMicDevice');
   if (micSelect) {
     micSelect.addEventListener('change', () => {
-      startMicPreview();
+      if (isVcastTabActive()) startMicPreview();
     });
   }
 });

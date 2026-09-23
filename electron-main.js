@@ -7,6 +7,9 @@
 const { app, dialog } = require('electron');
 const path = require('path');
 
+// WebRTCがWindowsのマイク入力音量を自動変更しないようにする。
+app.commandLine.appendSwitch('disable-features', 'WebRtcAllowInputVolumeAdjustment');
+
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.otsumamicast.app');
 }

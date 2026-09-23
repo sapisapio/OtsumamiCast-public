@@ -23,6 +23,10 @@ function setActiveTab(tabName) {
   if (targetPane) {
     targetPane.style.display = 'block';
   }
+
+  window.dispatchEvent(new CustomEvent('otsumamiTabChanged', {
+    detail: { tabName }
+  }));
 }
 
 async function loadTab(tabName) {
