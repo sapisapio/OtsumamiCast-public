@@ -1,6 +1,6 @@
 {
   "name": "otsumamicast",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "YouTube同期視聴デスクトップアプリ - PeerCast配信者向けツール",
   "main": "electron-main.js",
   "author": "sapisapio",
@@ -90,4 +90,3 @@
     }
   }
 }
-
